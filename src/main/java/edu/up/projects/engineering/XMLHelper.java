@@ -108,10 +108,13 @@ public class XMLHelper
             PrintWriter print_line = new PrintWriter(write);
             print_line.print("<?xml version=\"1.0\"?>\n");
             print_line.print("<Lab sessionID=\"" + labState.getSessionId() + "\">\n");
-            for (int x = 0; x < labState.getClassRoster().length; x++) {
+            for (int x = 0; x < labState.getClassRoster().length; x++) 
+            {
                 print_line.print("\t<student userID=\"" + labState.getClassRoster()[x] + "\">\n");
-                for (int y = 0; y < labState.getCheckpoints().length; y++)
+                for (int y = 0; y < labState.getCheckpoints().length-1; y++)
+                {
                     print_line.print("\t\t<checkpoint" + y + ">" + labState.getCheckpoints()[x][y] + "</checkpoint" + y + ">\n");
+                }
                 print_line.print("\t</student>\n");
             }
             print_line.print("</lab>");

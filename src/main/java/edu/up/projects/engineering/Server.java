@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
@@ -28,28 +29,29 @@ public class Server
      */
     public void runServer() throws IOException
     {
-        //report ip address in the command line
+        String serverAddress = "";
+        int port = 8080;
+        
+        //determine ip address of machine
         InetAddress ip;
         try
         {
             ip = InetAddress.getLocalHost();
-            System.out.println("Server running on IP address: " + ip.toString().split("/")[1]);
+            serverAddress = ip.toString().split("/")[1];
         }
         catch (UnknownHostException e)
         {
             e.printStackTrace();
         }
-
-
-
+        
         //create an always listening server
         int clientNumber = 0;   // increments every time a new client connects
         running = true;
-        int port = 8081;
-        ServerSocket listener = new ServerSocket(port);
+        ServerSocket listener = new ServerSocket();
+        listener.bind(new InetSocketAddress(serverAddress, port));
+        System.out.println("Program Server started and reachable at " + serverAddress + ":" + port);
         try
         {
-            System.out.println("Running on port: " + port);
             while (running)
             {
                 //create a new instance of a class that reads a network input
@@ -112,6 +114,7 @@ public class Server
                         XMLHelper helper = new XMLHelper();
 
                         // parse a sample xml file to an object and print values
+                        System.out.println(rootPath);
                         LabState labState = helper.parseXML(rootPath, filename);
                         helper.writeFile(labState);
                         System.out.println("Lab Session ID: " + labState.getSessionId());
