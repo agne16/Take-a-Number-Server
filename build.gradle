@@ -1,0 +1,7 @@
+apply plugin: 'java'
+
+dependencies {
+    compile fileTree(include: ['*.jar'], dir: 'libs')
+    compile 'org.jdom:jdom2:2.0.6'
+    compile 'org.jdom:jdom2:2.0.6'
+}
