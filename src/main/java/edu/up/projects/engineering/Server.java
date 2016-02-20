@@ -100,12 +100,7 @@ public class Server
                     //depending on the message sent
                     else if(input.equals("append"))
                     {
-                        out.println("this is you are reply from the server");
-                        out.println("DIE DIE DIE DIE DIE");
-                        out.println("DIR DIR DIR DIR DIR");
-                        out.println("ayy");
                         System.out.println("Invoking 'append' command");
-                        break;
                     }
                     else if(input.equals("do something")) {
                         System.out.println("Invoking 'doing something' command");

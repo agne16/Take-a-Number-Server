@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<Lab sessionId="17378">
+	<student userId="ketchu15">
+		<checkpoint1>False</checkpoint1>
+		<checkpoint2>False</checkpoint2>
+		<checkpoint3>False</checkpoint3>
+	</student>
+	<student userId="strife12">
+		<checkpoint1>True</checkpoint1>
+		<checkpoint2>True</checkpoint2>
+		<checkpoint3>False</checkpoint3>
+	</student>
+	<student userId="mcclou11">
+		<checkpoint1>True</checkpoint1>
+		<checkpoint2>True</checkpoint2>
+		<checkpoint3>True</checkpoint3>
+	</student>
+	<student userId="arans11">
+		<checkpoint1>True</checkpoint1>
+		<checkpoint2>True</checkpoint2>
+		<checkpoint3>True</checkpoint3>
+	</student>
+</Lab>
