@@ -43,7 +43,10 @@ public class Server
         {
             e.printStackTrace();
         }
-        
+
+        doSomething();
+
+        /*
         //create an always listening server
         int clientNumber = 0;   // increments every time a new client connects
         running = true;
@@ -62,6 +65,7 @@ public class Server
         {
             listener.close();
         }
+        */
     }
 
     private class Writer extends Thread
@@ -183,5 +187,26 @@ public class Server
 
         return false;
     }
+
+    public void doSomething()
+    {
+        System.out.println("Invoking 'doing something' command");
+
+        String rootPath = System.getProperty("user.dir");   //root of project folder
+        String filename = "CS273-A-ComputerScienceLaboratory-17378.xml"; // filename
+
+        // write a sample xml file
+        XMLHelper helper = new XMLHelper();
+
+        // parse a sample xml file to an object and print values
+        System.out.println(rootPath);
+        LabState labState = helper.parseXML(rootPath, filename);
+        helper.writeFile(labState);
+        System.out.println("Lab Session ID: " + labState.getSessionId());
+        System.out.println("Student: " + labState.getClassRoster()[0]);
+        System.out.println("Checkpoint 1: " + labState.getCheckpoints()[0][1]);
+    }
+
+
 
 }
