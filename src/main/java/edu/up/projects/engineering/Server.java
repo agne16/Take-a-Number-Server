@@ -1,6 +1,10 @@
 package edu.up.projects.engineering;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
@@ -21,6 +25,8 @@ public class Server
     private String savedLabSessionFilePath;
     private LabState currentLabState;
     private boolean running;
+    String rootPath = System.getProperty("user.dir");   //root of project folder
+
 
     /**
      * Called from ServerMain.main() as a new server instance
@@ -44,6 +50,10 @@ public class Server
             e.printStackTrace();
         }
 
+        XMLHelper helper = new XMLHelper();
+        String filename = "CS273-A-ComputerScienceLaboratory-17378.xml"; // filename
+        currentLabState = helper.parseXML(rootPath, filename);
+        retrieveCheckpoints("17378","127.0.0.1");
         doSomething();
 
         /*
@@ -111,7 +121,6 @@ public class Server
                     else if(input.equals("do something")) {
                         System.out.println("Invoking 'doing something' command");
 
-                        String rootPath = System.getProperty("user.dir");   //root of project folder
                         String filename = "CS273-A-ComputerScienceLaboratory-17378.xml"; // filename
 
                         // write a sample xml file
@@ -125,6 +134,12 @@ public class Server
                         System.out.println("Student: " + labState.getClassRoster()[0]);
                         System.out.println("Checkpoint 1: " + labState.getCheckpoints()[0][1]);
                     }
+                    else if (input.split("#")[0].equals("checkpoint"))
+                    {
+                        String points = retrieveCheckpoints(input.split("#")[1],input.split("#")[2]);
+                        out.print(points);
+                    }
+
                     else
                     {
                         System.out.println("nothing doing");
@@ -207,6 +222,78 @@ public class Server
         System.out.println("Checkpoint 1: " + labState.getCheckpoints()[0][1]);
     }
 
+    public String retrieveCheckpoints(String sessionId, String ipAddr)
+    {
+        String content = "";
+        File file = new File(rootPath + "/" + sessionId +"-checkpoints.txt");
+        if(!file.exists())
+        {
+            initWorkingCheckpoints(sessionId);
+            return "Error: Session does not exist";
+        }
+        try {
+            BufferedReader reader = new BufferedReader(new FileReader(file));
+            content = reader.readLine();
+            if(content.equals("")){
+                System.out.println("Whoa, whoa, whoa. Empty file");
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return content;
+    }
+
+    public boolean initWorkingCheckpoints(String sessionId)
+    {
+        String labSessionId = currentLabState.getSessionId();
+        String[] labClassRoster = currentLabState.getClassRoster();
+        boolean[][] labCheckpoints = currentLabState.getCheckpoints();
+
+        if (!sessionId.equals(labSessionId))
+        {
+            System.out.println("Whoa, whoa, whoa. Lab session ID mismatch");
+            return false;
+        }
+        if (labClassRoster.length != labCheckpoints.length)
+        {
+            System.out.println("Whoa, whoa, whoa. Different lengths for roster and checkpoint list");
+            return false;
+        }
+
+        File file = new File(rootPath + "/" + sessionId +"-checkpoints.txt");
+        try {
+            FileWriter write = new FileWriter(file.getAbsoluteFile());
+            PrintWriter print_line = new PrintWriter(write);
+
+            String content = "Checkpoint";
+
+            for (int x = 0; x < labClassRoster.length; x++){
+                content = content + "#" + labClassRoster[x] + "#";
+                for (int y = 0; y < labCheckpoints[x].length; y++){
+                    int value = 0;
+                    if (labCheckpoints[x][y]) {
+                        value = 1;
+                    }
+                    content = content + value;
+                    if (y < labCheckpoints[x].length-1){
+                        content = content + ",";
+                    }
+                }
+            }
+            //System.out.println(content);
+            print_line.write(content);
+            print_line.close();
+            write.close();
+            return true;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return false;
+    }
 
 
 }

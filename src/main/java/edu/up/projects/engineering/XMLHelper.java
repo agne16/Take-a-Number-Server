@@ -111,9 +111,9 @@ public class XMLHelper
             for (int x = 0; x < labState.getClassRoster().length; x++) 
             {
                 print_line.print("\t<student userID=\"" + labState.getClassRoster()[x] + "\">\n");
-                for (int y = 0; y < labState.getCheckpoints().length; y++)
+                for (int y = 0; y < labState.getCheckpoints().length-1; y++)
                 {
-                    print_line.print("\t\t<checkpoint" + y + ">" + labState.getCheckpoints()[x][y] + "</checkpoint" + y + ">\n");
+                    print_line.print("\t\t<checkpoint" + (y+1) + ">" + labState.getCheckpoints()[x][y] + "</checkpoint" + (y+1) + ">\n");
                 }
                 print_line.print("\t</student>\n");
             }
