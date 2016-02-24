@@ -50,12 +50,10 @@ public class Server
             e.printStackTrace();
         }
 
-        /*
         XMLHelper helper = new XMLHelper();
         String filename = "CS273-A-ComputerScienceLaboratory-17378.xml"; // filename
         currentLabState = helper.parseXML(rootPath, filename);
-        retrieveCheckpoints("17378","127.0.0.1");
-        */
+        //retrieveCheckpoints("17378","127.0.0.1");
 
         //create an always listening server
         int clientNumber = 0;   // increments every time a new client connects
@@ -223,7 +221,7 @@ public class Server
         if(!file.exists())
         {
             initWorkingCheckpoints(sessionId);
-            return "Error: Session does not exist";
+            //return "Error: Session does not exist";
         }
         try {
             BufferedReader reader = new BufferedReader(new FileReader(file));
