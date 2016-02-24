@@ -51,7 +51,7 @@ public class Server
         }
 
         XMLHelper helper = new XMLHelper();
-        String filename = "CS273-A-ComputerScienceLaboratory-17378.xml"; // filename
+        String filename = "CS371-C-ComputerScienceLaboratory-64378.xml"; // filename
         currentLabState = helper.parseXML(rootPath, filename);
         //retrieveCheckpoints("17378","127.0.0.1");
 
@@ -106,6 +106,42 @@ public class Server
 
                     //do note that ServerClient.java will always expect a reply back
 
+                    String[] parms = input.split("#");
+                    boolean closed = false;
+                    switch (parms[0]) {
+                        case "":
+                        case ".":
+                            System.out.println("Empty String: received");
+                            closed = true;  //closes connection with a client. server is still running
+                            break;
+                        case "append":
+                            System.out.println("INFO: Invoking 'append' command");
+                            out.println("done " + input);
+                            break;
+                        case "do something":
+                            System.out.println("INFO: Invoking 'doing something' command");
+                            doSomething();
+                            out.println("done " + input);
+                            break;
+                        case "checkpoint":
+                            System.out.println("INFO: Checkpoint method invoked");
+
+                            String points = retrieveCheckpoints(input.split("#")[1],input.split("#")[2]);
+                            out.println(points);//out to tablet
+                            break;
+                        case "checkpointreply":
+                            System.out.println("INFO: Write File invoked");
+                            break;
+                        default:
+                            out.println("nothing doing");
+                            out.println("done " + input);
+                            break;
+                    }
+                    if (closed){
+                        break;
+                    }
+
+                    /*
                     if (input.equals("") || input.equals("."))
                     {
                         System.out.println("Empty String: received");
@@ -127,11 +163,15 @@ public class Server
                         String points = retrieveCheckpoints(input.split("#")[1],input.split("#")[2]);
                         out.println(points);//out to tablet
                     }
+                    else if (input.split("#")[0].equals("checkpointreply")){
+                        System.out.println("INFO: Write File invoked");
+                    }
                     else //any other message
                     {
                         out.println("nothing doing");
                     }
                     //out.println(input.toUpperCase());
+                    */
                 }
             }
             catch (IOException e)
@@ -193,7 +233,7 @@ public class Server
     public void doSomething()
     {
         String rootPath = System.getProperty("user.dir");   //root of project folder
-        String filename = "CS273-A-ComputerScienceLaboratory-17378.xml"; // filename
+        String filename = "CS371-C-ComputerScienceLaboratory-64378.xml"; // filename
 
         // write a sample xml file
         XMLHelper helper = new XMLHelper();

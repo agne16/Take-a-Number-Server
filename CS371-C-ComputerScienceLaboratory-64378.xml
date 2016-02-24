@@ -1,0 +1,45 @@
+<?xml version="1.0"?>
+<Lab sessionId="64378">
+	<student userId="alconcel16">
+		<checkpoint1>False</checkpoint1>
+		<checkpoint2>False</checkpoint2>
+		<checkpoint3>False</checkpoint3>
+		<checkpoint4>False</checkpoint4>
+		<checkpoint5>False</checkpoint5>
+	</student>
+	<student userId="agne16">
+		<checkpoint1>True</checkpoint1>
+		<checkpoint2>True</checkpoint2>
+		<checkpoint3>False</checkpoint3>
+		<checkpoint4>False</checkpoint4>
+		<checkpoint5>False</checkpoint5>
+	</student>
+	<student userId="farr16">
+		<checkpoint1>True</checkpoint1>
+		<checkpoint2>True</checkpoint2>
+		<checkpoint3>True</checkpoint3>
+		<checkpoint4>False</checkpoint4>
+		<checkpoint5>False</checkpoint5>
+	</student>
+	<student userId="sohm16">
+		<checkpoint1>True</checkpoint1>
+		<checkpoint2>True</checkpoint2>
+		<checkpoint3>True</checkpoint3>
+		<checkpoint4>False</checkpoint4>
+		<checkpoint5>False</checkpoint5>
+	</student>
+	<student userId="vegdahl">
+		<checkpoint1>True</checkpoint1>
+		<checkpoint2>True</checkpoint2>
+		<checkpoint3>True</checkpoint3>
+		<checkpoint4>False</checkpoint4>
+		<checkpoint5>False</checkpoint5>
+	</student>
+	<student userId="nuxoll">
+		<checkpoint1>True</checkpoint1>
+		<checkpoint2>True</checkpoint2>
+		<checkpoint3>True</checkpoint3>
+		<checkpoint4>False</checkpoint4>
+		<checkpoint5>False</checkpoint5>
+	</student>
+</Lab>
