@@ -64,7 +64,8 @@ public class ServerClient {
                 } catch (IOException ex) {
                     response = "Error: " + ex;
                 }
-                messageArea.append(response + "\n");
+                System.out.println(response);
+                //messageArea.append(response + "\n");
                 dataField.selectAll();
             }
         });
@@ -88,13 +89,13 @@ public class ServerClient {
 
         // Make connection and initialize streams
         Socket socket = new Socket(serverAddress, 8080);
-        in = new BufferedReader(
-                new InputStreamReader(socket.getInputStream()));
+        in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         out = new PrintWriter(socket.getOutputStream(), true);
 
         // Consume the initial welcoming messages from the server
         for (int i = 0; i < 3; i++) {
-            messageArea.append(in.readLine() + "\n");
+            //messageArea.append(in.readLine() + "\n");
+            //System.out.println(in.readLine());
         }
     }
 

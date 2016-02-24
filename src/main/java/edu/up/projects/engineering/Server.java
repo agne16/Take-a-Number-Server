@@ -50,13 +50,13 @@ public class Server
             e.printStackTrace();
         }
 
+        /*
         XMLHelper helper = new XMLHelper();
         String filename = "CS273-A-ComputerScienceLaboratory-17378.xml"; // filename
         currentLabState = helper.parseXML(rootPath, filename);
         retrieveCheckpoints("17378","127.0.0.1");
-        doSomething();
+        */
 
-        /*
         //create an always listening server
         int clientNumber = 0;   // increments every time a new client connects
         running = true;
@@ -75,7 +75,6 @@ public class Server
         {
             listener.close();
         }
-        */
     }
 
     private class Writer extends Thread
@@ -105,44 +104,34 @@ public class Server
                     //read an interpret any incoming messages
                     String input = in.readLine();
                     input = input.trim().toLowerCase();
-                    System.out.println(input);
+                    System.out.println("Message received: " + input);
+
+                    //do note that ServerClient.java will always expect a reply back
+
                     if (input.equals("") || input.equals("."))
                     {
                         System.out.println("Empty String: received");
                         break;  //closes connection with a client. server is still running
                     }
-
-                    //my way of testing out different ways of invoking methods
-                    //depending on the message sent
                     else if(input.equals("append"))
                     {
-                        System.out.println("Invoking 'append' command");
+                        System.out.println("INFO: Invoking 'append' command");
+                        out.println("done");
                     }
                     else if(input.equals("do something")) {
-                        System.out.println("Invoking 'doing something' command");
-
-                        String filename = "CS273-A-ComputerScienceLaboratory-17378.xml"; // filename
-
-                        // write a sample xml file
-                        XMLHelper helper = new XMLHelper();
-
-                        // parse a sample xml file to an object and print values
-                        System.out.println(rootPath);
-                        LabState labState = helper.parseXML(rootPath, filename);
-                        helper.writeFile(labState);
-                        System.out.println("Lab Session ID: " + labState.getSessionId());
-                        System.out.println("Student: " + labState.getClassRoster()[0]);
-                        System.out.println("Checkpoint 1: " + labState.getCheckpoints()[0][1]);
+                        System.out.println("INFO: Invoking 'doing something' command");
+                        doSomething();
+                        out.println("done");
                     }
-                    else if (input.split("#")[0].equals("checkpoint"))
+                    else if (input.split("#")[0].equals("checkpoint")) //Expecting input such as "checkpoint#<sessionId>#<tablet ip address>"
                     {
+                        System.out.println("INFO: Checkpoint method invoked");
                         String points = retrieveCheckpoints(input.split("#")[1],input.split("#")[2]);
-                        out.print(points);
+                        out.println(points);//out to tablet
                     }
-
-                    else
+                    else //any other message
                     {
-                        System.out.println("nothing doing");
+                        out.println("nothing doing");
                     }
                     //out.println(input.toUpperCase());
                 }
@@ -205,8 +194,6 @@ public class Server
 
     public void doSomething()
     {
-        System.out.println("Invoking 'doing something' command");
-
         String rootPath = System.getProperty("user.dir");   //root of project folder
         String filename = "CS273-A-ComputerScienceLaboratory-17378.xml"; // filename
 
@@ -222,6 +209,13 @@ public class Server
         System.out.println("Checkpoint 1: " + labState.getCheckpoints()[0][1]);
     }
 
+    /**
+     *  Retrieves "network packet" format for checkpoints from file
+     *
+     * @param sessionId
+     * @param ipAddr
+     * @return
+     */
     public String retrieveCheckpoints(String sessionId, String ipAddr)
     {
         String content = "";
@@ -234,9 +228,11 @@ public class Server
         try {
             BufferedReader reader = new BufferedReader(new FileReader(file));
             content = reader.readLine();
-            if(content.equals("")){
+            if(content == null){
                 System.out.println("Whoa, whoa, whoa. Empty file");
+                return "Error";
             }
+            return content;
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e) {
@@ -246,6 +242,12 @@ public class Server
         return content;
     }
 
+    /**
+     * Converts a lab session checkpoints to "network packet" format
+     *
+     * @param sessionId
+     * @return
+     */
     public boolean initWorkingCheckpoints(String sessionId)
     {
         String labSessionId = currentLabState.getSessionId();
