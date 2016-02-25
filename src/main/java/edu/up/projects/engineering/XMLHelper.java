@@ -80,7 +80,7 @@ public class XMLHelper
         return parsedState;
     }
 
-    public void writeFile(LabState labState)
+    public void writeFile(LabState labState, String dest)
     {
         int courseID = 777;
         String courseSection = "A";
@@ -88,8 +88,7 @@ public class XMLHelper
 
         try
         {
-            String path = System.getProperty("user.dir");
-            File file = new File(path + "/CS" + courseSection + courseID + "-" + courseName + "-" + labState.getSessionId() + ".xml");
+            File file = new File(dest + "/CS" + courseSection + courseID + "-" + courseName + "-" + labState.getSessionId() + ".xml");
             if(!file.exists())
             {
                 if(!file.createNewFile()){

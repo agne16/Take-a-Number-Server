@@ -22,11 +22,12 @@ import java.util.Hashtable;
  */
 public class Server
 {
+    String rootPath = System.getProperty("user.dir");   //root of project folder
+    private String labsFilePath = rootPath + "/LabSessions";
+    private String labsFilePathTemp = rootPath + "/LabTemp";
     private String rosterCsvFilePath;
-    private String savedLabSessionFilePath;
     private LabState currentLabState;
     private boolean running;
-    String rootPath = System.getProperty("user.dir");   //root of project folder
 
 
     /**
@@ -51,9 +52,12 @@ public class Server
             e.printStackTrace();
         }
 
+        validatePath(labsFilePath);
+        validatePath(labsFilePathTemp);
+
         XMLHelper helper = new XMLHelper();
         String filename = "CS371-C-ComputerScienceLaboratory-64378.xml"; // filename
-        currentLabState = helper.parseXML(rootPath, filename);
+        currentLabState = helper.parseXML(labsFilePath, filename);
         doSomething();
         initWorkingCheckpoints("64378");
 
@@ -204,16 +208,15 @@ public class Server
 
     public void doSomething()
     {
-        String rootPath = System.getProperty("user.dir");   //root of project folder
         String filename = "CS371-C-ComputerScienceLaboratory-64378.xml"; // filename
 
         // write a sample xml file
         XMLHelper helper = new XMLHelper();
 
         // parse a sample xml file to an object and print values
-        System.out.println(rootPath);
-        LabState labState = helper.parseXML(rootPath, filename);
-        helper.writeFile(labState);
+        System.out.println(labsFilePath);
+        LabState labState = helper.parseXML(labsFilePath, filename);
+        helper.writeFile(labState, labsFilePath);
 
         Student student = labState.getClassData().get(labState.getClassRoster().get(0));
         System.out.println("Lab Session ID: " + labState.getSessionId());
@@ -231,7 +234,7 @@ public class Server
     public String retrieveCheckpoints(String sessionId, String ipAddr)
     {
         String content = "";
-        File file = new File(rootPath + "/" + sessionId +"-checkpoints.txt");
+        File file = new File(labsFilePathTemp + "/" + sessionId +"-checkpoints.txt");
         if(!file.exists())
         {
             initWorkingCheckpoints(sessionId);
@@ -273,7 +276,7 @@ public class Server
             return false;
         }
 
-        File file = new File(rootPath + "/" + sessionId +"-checkpoints.txt");
+        File file = new File(labsFilePathTemp + "/" + sessionId +"-checkpoints.txt");
         try
         {
             FileWriter write = new FileWriter(file.getAbsoluteFile());
@@ -304,7 +307,7 @@ public class Server
     }
 
     public boolean writeCheckpoints(String sessionId, String content) {
-        File file = new File(rootPath + "/" + sessionId +"-checkpoints.txt");
+        File file = new File(labsFilePath + "/" + sessionId +"-checkpoints.txt");
         try {
             FileWriter write = new FileWriter(file.getAbsoluteFile());
             PrintWriter print_line = new PrintWriter(write);
@@ -331,6 +334,14 @@ public class Server
 
     public String initCheckpoints() {
         return "";
+    }
+
+    public boolean validatePath(String s) {
+        File directory = new File(s);
+        if (directory.isDirectory()){
+            return true;
+        }
+        return directory.mkdirs();
     }
 
 }
