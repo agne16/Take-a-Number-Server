@@ -8,13 +8,13 @@ public class Student
     private String firstName;
     private String lastName;
     private String userId;
-    private boolean[] checkpoints;
+    private String[] checkpoints;
 
-    public Student(String initFirstName, String initLastName, String initUserId, boolean[] initCheckpoints)
+    public Student(String initUserId, String initFirstName, String initLastName, String[] initCheckpoints)
     {
+        this.userId = initUserId;
         this.firstName = initFirstName;
         this.lastName = initLastName;
-        this.userId = initUserId;
         this.checkpoints = initCheckpoints;
     }
 
@@ -33,12 +33,12 @@ public class Student
         return userId;
     }
 
-    public boolean[] getCheckpoints()
+    public String[] getCheckpoints()
     {
         return checkpoints;
     }
 
-    public void setCheckpoints(boolean[] checkpoints)
+    public void setCheckpoints(String[] checkpoints)
     {
         this.checkpoints = checkpoints;
     }

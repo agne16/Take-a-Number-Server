@@ -42,45 +42,29 @@ public class XMLHelper
 
             //Get the array of students
             List<Element> students = labState.getChildren();
-            int numCheckpoints = students.get(0).getChildren().size();
+            int numCheckpoints = Integer.parseInt(students.get(0).getValue()); //child(0) is reserved for numCheckpoints
 
             //initialize values to be passed onto LabState constructor
             String sessionId = labState.getAttribute("sessionId").getValue();
-            String[] classRoster = new String[students.size()];
-            boolean[][] checkpoints = new boolean[students.size()][numCheckpoints];
             ArrayList<String> labQueue = new ArrayList<>();
-
             Hashtable<String,Student> everyone = new Hashtable<>();
 
             //For each student
-            for(int i = 0; i < students.size(); i++)
+            for(int i = 1; i < students.size(); i++)
             {
+                List<Element> currStudentData = students.get(i).getChildren();
+
                 //add the student id to the class roster
                 String userId =  students.get(i).getAttribute("userId").getValue();
-                classRoster[i] = userId;
+                String firstName = currStudentData.get(0).getValue().toLowerCase();
+                String lastName = currStudentData.get(1).getValue().toLowerCase();
+                String[] checkpoints = currStudentData.get(1).getValue().split(",");
 
-                boolean[] personalCheckpoints = new boolean[numCheckpoints];
-                //run for all of the student's checkpoints
-                List<Element> studentCheckpoints = students.get(i).getChildren();
-                for(int j = 0; j < studentCheckpoints.size(); j++)
-                {
-                    //convert the string 'true' or 'false' to a boolean
-                    String checkpointString = studentCheckpoints.get(j).getValue().toLowerCase();
-                    boolean checkpointValue = false;
-                    if(checkpointString.equals("true"))
-                    {
-                        checkpointValue = true;
-                    }
-
-                    //write to the array
-                    checkpoints[i][j] = checkpointValue;
-                    personalCheckpoints[j] = checkpointValue;
-
-                    //create a labState
-                    parsedState = new LabState(sessionId, classRoster, checkpoints,labQueue);
-
-                }
+                Student student = new Student(userId, firstName, lastName, checkpoints);
+                everyone.put(userId, student);
             }
+
+            parsedState = new LabState(sessionId, everyone, labQueue);
         }
         catch (JDOMException e)
         {

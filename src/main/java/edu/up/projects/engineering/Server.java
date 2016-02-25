@@ -51,7 +51,7 @@ public class Server
         }
 
         XMLHelper helper = new XMLHelper();
-        String filename = "CS371-C-ComputerScienceLaboratory-64378.xml"; // filename
+        String filename = "CS233-E-ComputerScienceLaboratory-64531.xml"; // filename
         currentLabState = helper.parseXML(rootPath, filename);
         //retrieveCheckpoints("17378","127.0.0.1");
 
