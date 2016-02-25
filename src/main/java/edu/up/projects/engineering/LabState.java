@@ -7,18 +7,27 @@ import java.util.Hashtable;
 public class LabState
 {
     private String sessionId;
-    private String[] classRoster;
-    private boolean[][] checkpoints;
+    private ArrayList<String> classRoster;
     private ArrayList<String> labQueue;
     private HashMap<String, Integer> seatPositions;
+    private Hashtable<String, Student> classData;
 
-    public LabState(String initSessionId, String[] initClassRoster, boolean[][] initCheckpoints,
-                    ArrayList<String> initLabQueue)
+    public LabState(String initSessionId, Hashtable<String,Student> initRoster, ArrayList<String> initClassRoster, ArrayList<String> initLabQueue)
     {
-        sessionId = initSessionId;
-        classRoster = initClassRoster;
-        checkpoints = initCheckpoints;
-        labQueue = initLabQueue;
+        this.sessionId = initSessionId;
+        this.classData = initRoster;
+        this.classRoster = initClassRoster;
+        this.labQueue = initLabQueue;
+    }
+
+    public Hashtable<String, Student> getClassData()
+    {
+        return classData;
+    }
+
+    public void setClassData(Hashtable<String, Student> classData)
+    {
+        this.classData = classData;
     }
 
     public String getSessionId()
@@ -31,24 +40,14 @@ public class LabState
         this.sessionId = sessionId;
     }
 
-    public String[] getClassRoster()
+    public ArrayList<String> getClassRoster()
     {
         return classRoster;
     }
 
-    public void setClassRoster(String[] classRoster)
+    public void setClassRoster(ArrayList<String> classRoster)
     {
         this.classRoster = classRoster;
-    }
-
-    public boolean[][] getCheckpoints()
-    {
-        return checkpoints;
-    }
-
-    public void setCheckpoints(boolean[][] checkpoints)
-    {
-        this.checkpoints = checkpoints;
     }
 
     public ArrayList<String> getLabQueue()
@@ -69,27 +68,5 @@ public class LabState
     public void setSeatPositions(HashMap<String, Integer> seatPositions)
     {
         this.seatPositions = seatPositions;
-    }
-
-    ////
-    //Test Constructor
-    ////
-
-    Hashtable<String, Student> roster;
-    public LabState(String initSessionId, Hashtable<String,Student> initRoster, ArrayList<String> initLabQueue)
-    {
-        this.sessionId = initSessionId;
-        this.roster = initRoster;
-        this.labQueue = initLabQueue;
-    }
-
-    public Hashtable<String, Student> getRoster()
-    {
-        return roster;
-    }
-
-    public void setRoster(Hashtable<String, Student> roster)
-    {
-        this.roster = roster;
     }
 }

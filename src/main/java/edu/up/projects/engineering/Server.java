@@ -14,6 +14,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Hashtable;
 
 /**
  * based on http://cs.lmu.edu/~ray/notes/javanetexamples/
@@ -51,9 +52,10 @@ public class Server
         }
 
         XMLHelper helper = new XMLHelper();
-        String filename = "CS233-E-ComputerScienceLaboratory-64531.xml"; // filename
+        String filename = "CS371-C-ComputerScienceLaboratory-64378.xml"; // filename
         currentLabState = helper.parseXML(rootPath, filename);
-        //retrieveCheckpoints("17378","127.0.0.1");
+        doSomething();
+        initWorkingCheckpoints("64378");
 
         //create an always listening server
         int clientNumber = 0;   // increments every time a new client connects
@@ -182,7 +184,8 @@ public class Server
         boolean[][] checkpoints = labSession.getCheckpoints();
         ArrayList<String> labQueue = labSession.getLabQueue();
 
-        return new LabState(sessionId, classRoster, checkpoints, labQueue);
+        return null;
+        //return new LabState(sessionId, classRoster, checkpoints, labQueue);
     }
 
     public boolean authenticateStudent(String classRosterPath, String studentID, String filename) throws IOException {
@@ -211,9 +214,11 @@ public class Server
         System.out.println(rootPath);
         LabState labState = helper.parseXML(rootPath, filename);
         helper.writeFile(labState);
+
+        Student student = labState.getClassData().get(labState.getClassRoster().get(0));
         System.out.println("Lab Session ID: " + labState.getSessionId());
-        System.out.println("Student: " + labState.getClassRoster()[0]);
-        System.out.println("Checkpoint 1: " + labState.getCheckpoints()[0][1]);
+        System.out.println("Student: " + student.getUserId());
+        System.out.println("Checkpoint 1: " + student.getCheckpoints()[0]);
     }
 
     /**
@@ -258,38 +263,31 @@ public class Server
     public boolean initWorkingCheckpoints(String sessionId)
     {
         String labSessionId = currentLabState.getSessionId();
-        String[] labClassRoster = currentLabState.getClassRoster();
-        boolean[][] labCheckpoints = currentLabState.getCheckpoints();
+        Hashtable<String,Student> classData = currentLabState.getClassData();
+        ArrayList<String> classRoster = currentLabState.getClassRoster();
+
 
         if (!sessionId.equals(labSessionId))
         {
             System.out.println("Whoa, whoa, whoa. Lab session ID mismatch");
             return false;
         }
-        if (labClassRoster.length != labCheckpoints.length)
-        {
-            System.out.println("Whoa, whoa, whoa. Different lengths for roster and checkpoint list");
-            return false;
-        }
 
         File file = new File(rootPath + "/" + sessionId +"-checkpoints.txt");
-        try {
+        try
+        {
             FileWriter write = new FileWriter(file.getAbsoluteFile());
             PrintWriter print_line = new PrintWriter(write);
 
-            String content = "Checkpoint";
+            String content = "checkpoint";
 
-            for (int x = 0; x < labClassRoster.length; x++){
-                content = content + "#" + labClassRoster[x] + "#";
-                for (int y = 0; y < labCheckpoints[x].length; y++){
-                    int value = 0;
-                    if (labCheckpoints[x][y]) {
-                        value = 1;
-                    }
-                    content = content + value;
-                    if (y < labCheckpoints[x].length-1){
-                        content = content + ",";
-                    }
+            for (String s : classRoster) {
+                Student student = classData.get(s);
+                String[] checkpoints = student.getCheckpoints();
+                content = content + "#" + student.getUserId();
+                content = content + "#" + checkpoints[0];
+                for (int i = 1; i < checkpoints.length; i++){
+                   content = content + "," + checkpoints[i];
                 }
             }
             //System.out.println(content);
@@ -297,7 +295,8 @@ public class Server
             print_line.close();
             write.close();
             return true;
-        } catch (IOException e) {
+        } catch (IOException e)
+        {
             e.printStackTrace();
         }
 

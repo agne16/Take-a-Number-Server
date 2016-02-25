@@ -1,45 +1,34 @@
 <?xml version="1.0"?>
 <Lab sessionId="64378">
+	<checkpoints>5</checkpoints>
 	<student userId="alconcel16">
-		<checkpoint1>False</checkpoint1>
-		<checkpoint2>False</checkpoint2>
-		<checkpoint3>False</checkpoint3>
-		<checkpoint4>False</checkpoint4>
-		<checkpoint5>False</checkpoint5>
+		<firstname>Micah</firstname>
+		<lastname>Alconcel</lastname>
+		<checkpoints>0,0,0,0,0</checkpoints>
 	</student>
 	<student userId="agne16">
-		<checkpoint1>True</checkpoint1>
-		<checkpoint2>True</checkpoint2>
-		<checkpoint3>False</checkpoint3>
-		<checkpoint4>False</checkpoint4>
-		<checkpoint5>False</checkpoint5>
+		<firstname>Teofilo</firstname>
+		<lastname>Agne</lastname>
+		<checkpoints>1,1,0,0,0</checkpoints>
 	</student>
 	<student userId="farr16">
-		<checkpoint1>True</checkpoint1>
-		<checkpoint2>True</checkpoint2>
-		<checkpoint3>True</checkpoint3>
-		<checkpoint4>False</checkpoint4>
-		<checkpoint5>False</checkpoint5>
+		<firstname>Matthew</firstname>
+		<lastname>Farr</lastname>
+		<checkpoints>1,1,1,0,0</checkpoints>
 	</student>
 	<student userId="sohm16">
-		<checkpoint1>True</checkpoint1>
-		<checkpoint2>True</checkpoint2>
-		<checkpoint3>True</checkpoint3>
-		<checkpoint4>False</checkpoint4>
-		<checkpoint5>False</checkpoint5>
+		<firstname>Nick</firstname>
+		<lastname>Sohm</lastname>
+		<checkpoints>1,1,1,0,0</checkpoints>
 	</student>
 	<student userId="vegdahl">
-		<checkpoint1>True</checkpoint1>
-		<checkpoint2>True</checkpoint2>
-		<checkpoint3>True</checkpoint3>
-		<checkpoint4>False</checkpoint4>
-		<checkpoint5>False</checkpoint5>
+		<firstname>Steve</firstname>
+		<lastname>Vegdahl</lastname>
+		<checkpoints>1,1,1,1,1</checkpoints>
 	</student>
 	<student userId="nuxoll">
-		<checkpoint1>True</checkpoint1>
-		<checkpoint2>True</checkpoint2>
-		<checkpoint3>True</checkpoint3>
-		<checkpoint4>False</checkpoint4>
-		<checkpoint5>False</checkpoint5>
+		<firstname>Andrew</firstname>
+		<lastname>Nuxoll</lastname>
+		<checkpoints>1,1,1,1,0</checkpoints>
 	</student>
 </Lab>
