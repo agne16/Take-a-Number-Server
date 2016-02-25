@@ -11,13 +11,15 @@ public class LabState
     private ArrayList<String> labQueue;
     private HashMap<String, Integer> seatPositions;
     private Hashtable<String, Student> classData;
+    private int numCheckpoints;
 
-    public LabState(String initSessionId, Hashtable<String,Student> initRoster, ArrayList<String> initClassRoster, ArrayList<String> initLabQueue)
+    public LabState(String initSessionId, Hashtable<String,Student> initRoster, ArrayList<String> initClassRoster, ArrayList<String> initLabQueue, int initNumCheckpoints)
     {
         this.sessionId = initSessionId;
         this.classData = initRoster;
         this.classRoster = initClassRoster;
         this.labQueue = initLabQueue;
+        this.numCheckpoints = initNumCheckpoints;
     }
 
     public Hashtable<String, Student> getClassData()
@@ -68,5 +70,15 @@ public class LabState
     public void setSeatPositions(HashMap<String, Integer> seatPositions)
     {
         this.seatPositions = seatPositions;
+    }
+
+    public int getNumCheckpoints()
+    {
+        return numCheckpoints;
+    }
+
+    public void setNumCheckpoints(int numCheckpoints)
+    {
+        this.numCheckpoints = numCheckpoints;
     }
 }

@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <Lab sessionId="64378">
-	<checkpoints>5</checkpoints>
+	<numCheckpoints>5</numCheckpoints>
 	<student userId="alconcel16">
 		<firstname>Micah</firstname>
 		<lastname>Alconcel</lastname>

@@ -70,7 +70,7 @@ public class XMLHelper
                 everyone.put(userId, student);
             }
 
-            parsedState = new LabState(sessionId, everyone, classList, labQueue);
+            parsedState = new LabState(sessionId, everyone, classList, labQueue, numCheckpoints);
         }
         catch (JDOMException | IOException e)
         {
@@ -99,6 +99,7 @@ public class XMLHelper
             PrintWriter print_line = new PrintWriter(write);
             print_line.print("<?xml version=\"1.0\"?>\n");
             print_line.print("<lab sessionId=\"" + labState.getSessionId() + "\">\n");
+            print_line.print("\t<numCheckpoints>" + labState.getNumCheckpoints() + "</numCheckpoints>\n");
             for (String s : labState.getClassRoster()) {
                 Student student = labState.getClassData().get(s);
                 String[] checkpoints = student.getCheckpoints();
