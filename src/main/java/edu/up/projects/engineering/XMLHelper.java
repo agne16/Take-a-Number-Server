@@ -10,6 +10,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Hashtable;
 import java.util.List;
 
 
@@ -49,18 +50,21 @@ public class XMLHelper
             boolean[][] checkpoints = new boolean[students.size()][numCheckpoints];
             ArrayList<String> labQueue = new ArrayList<>();
 
+            Hashtable<String,Student> everyone = new Hashtable<>();
+
             //For each student
             for(int i = 0; i < students.size(); i++)
             {
                 //add the student id to the class roster
-                classRoster[i] = students.get(i).getAttribute("userId").getValue();
+                String userId =  students.get(i).getAttribute("userId").getValue();
+                classRoster[i] = userId;
 
+                boolean[] personalCheckpoints = new boolean[numCheckpoints];
                 //run for all of the student's checkpoints
                 List<Element> studentCheckpoints = students.get(i).getChildren();
                 for(int j = 0; j < studentCheckpoints.size(); j++)
                 {
                     //convert the string 'true' or 'false' to a boolean
-                    String studentId = students.get(i).getAttribute("userId").getValue();
                     String checkpointString = studentCheckpoints.get(j).getValue().toLowerCase();
                     boolean checkpointValue = false;
                     if(checkpointString.equals("true"))
@@ -70,6 +74,7 @@ public class XMLHelper
 
                     //write to the array
                     checkpoints[i][j] = checkpointValue;
+                    personalCheckpoints[j] = checkpointValue;
 
                     //create a labState
                     parsedState = new LabState(sessionId, classRoster, checkpoints,labQueue);

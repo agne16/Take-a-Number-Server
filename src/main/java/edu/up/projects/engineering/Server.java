@@ -114,23 +114,24 @@ public class Server
                             System.out.println("Empty String: received");
                             closed = true;  //closes connection with a client. server is still running
                             break;
-                        case "append":
-                            System.out.println("INFO: Invoking 'append' command");
+                        case "foo":
+                            System.out.println("INFO: Invoking 'foo' command");
                             out.println("done " + input);
                             break;
-                        case "do something":
-                            System.out.println("INFO: Invoking 'doing something' command");
-                            doSomething();
+                        case "checkpointInit":
+                            System.out.println("INFO: Invoking 'checkpointInit' command");
+                            //doSomething();
                             out.println("done " + input);
                             break;
-                        case "checkpoint":
-                            System.out.println("INFO: Checkpoint method invoked");
-
-                            String points = retrieveCheckpoints(input.split("#")[1],input.split("#")[2]);
-                            out.println(points);//out to tablet
+                        case "checkpointSync":
+                            System.out.println("INFO: checkpointSync method invoked");
+                            boolean success = syncCheckpoints(parms[1], parms[2]);
+                            //String points = retrieveCheckpoints(parms[1],parms[2]);
+                            out.println(success);//out to tablet
                             break;
                         case "checkpointreply":
                             System.out.println("INFO: Write File invoked");
+
                             break;
                         default:
                             out.println("nothing doing");
@@ -140,38 +141,6 @@ public class Server
                     if (closed){
                         break;
                     }
-
-                    /*
-                    if (input.equals("") || input.equals("."))
-                    {
-                        System.out.println("Empty String: received");
-                        break;  //closes connection with a client. server is still running
-                    }
-                    else if(input.equals("append"))
-                    {
-                        System.out.println("INFO: Invoking 'append' command");
-                        out.println("done");
-                    }
-                    else if(input.equals("do something")) {
-                        System.out.println("INFO: Invoking 'doing something' command");
-                        doSomething();
-                        out.println("done");
-                    }
-                    else if (input.split("#")[0].equals("checkpoint")) //Expecting input such as "checkpoint#<sessionId>#<tablet ip address>"
-                    {
-                        System.out.println("INFO: Checkpoint method invoked");
-                        String points = retrieveCheckpoints(input.split("#")[1],input.split("#")[2]);
-                        out.println(points);//out to tablet
-                    }
-                    else if (input.split("#")[0].equals("checkpointreply")){
-                        System.out.println("INFO: Write File invoked");
-                    }
-                    else //any other message
-                    {
-                        out.println("nothing doing");
-                    }
-                    //out.println(input.toUpperCase());
-                    */
                 }
             }
             catch (IOException e)
@@ -335,5 +304,34 @@ public class Server
         return false;
     }
 
+    public boolean writeCheckpoints(String sessionId, String content) {
+        File file = new File(rootPath + "/" + sessionId +"-checkpoints.txt");
+        try {
+            FileWriter write = new FileWriter(file.getAbsoluteFile());
+            PrintWriter print_line = new PrintWriter(write);
+            //System.out.println(content);
+            print_line.write(content);
+            print_line.close();
+            write.close();
+            return true;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public boolean syncCheckpoints(String sessionId, String tabletString) {
+        String localString = retrieveCheckpoints(sessionId, "");
+        String mergedString = mergeCheckpoints(localString, tabletString);
+        return writeCheckpoints(sessionId, mergedString);
+    }
+
+    public String mergeCheckpoints(String localString, String tabletString) {
+        return "";
+    }
+
+    public String initCheckpoints() {
+        return "";
+    }
 
 }

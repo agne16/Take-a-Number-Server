@@ -2,6 +2,7 @@ package edu.up.projects.engineering;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Hashtable;
 
 public class LabState
 {
@@ -68,5 +69,27 @@ public class LabState
     public void setSeatPositions(HashMap<String, Integer> seatPositions)
     {
         this.seatPositions = seatPositions;
+    }
+
+    ////
+    //Test Constructor
+    ////
+
+    Hashtable<String, Student> roster;
+    public LabState(String initSessionId, Hashtable<String,Student> initRoster, ArrayList<String> initLabQueue)
+    {
+        this.sessionId = initSessionId;
+        this.roster = initRoster;
+        this.labQueue = initLabQueue;
+    }
+
+    public Hashtable<String, Student> getRoster()
+    {
+        return roster;
+    }
+
+    public void setRoster(Hashtable<String, Student> roster)
+    {
+        this.roster = roster;
     }
 }
