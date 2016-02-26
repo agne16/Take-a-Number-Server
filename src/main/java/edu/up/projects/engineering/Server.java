@@ -14,6 +14,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Hashtable;
 
 /**
@@ -28,6 +29,7 @@ public class Server
     private String rosterCsvFilePath;
     private LabState currentLabState;
     private boolean running;
+    XMLHelper helper = new XMLHelper();
 
 
     /**
@@ -55,11 +57,12 @@ public class Server
         validatePath(labsFilePath);
         validatePath(labsFilePathTemp);
 
-        XMLHelper helper = new XMLHelper();
+        /*
         String filename = "CS371-C-ComputerScienceLaboratory-64378.xml"; // filename
         currentLabState = helper.parseXML(labsFilePath, filename);
         doSomething();
         initWorkingCheckpoints("64378");
+        */
 
         //create an always listening server
         int clientNumber = 0;   // increments every time a new client connects
@@ -107,14 +110,18 @@ public class Server
                 {
                     //read an interpret any incoming messages
                     String input = in.readLine();
-                    input = input.trim().toLowerCase();
+                    input = input.trim();
                     System.out.println("Message received: " + input);
 
                     //do note that ServerClient.java will always expect a reply back
 
+                    //acceptable formats for method invoked messages:
+                    //checkpointInit#271,B,02,ComputerScienceLaboratory,3#userId,firstName,lastName,0,0,0...#userId,firstName,lastName,0,0,0
+                    //checkpointSync#271B02#userId,firstName,lastName,0,0,0...#userId,firstName,lastName,0,0,0
+
                     String[] parms = input.split("#");
                     boolean closed = false;
-                    switch (parms[0]) {
+                    switch (parms[0].toLowerCase()) {
                         case "":
                         case ".":
                             System.out.println("Empty String: received");
@@ -124,14 +131,26 @@ public class Server
                             System.out.println("INFO: Invoking 'foo' command");
                             out.println("done " + input);
                             break;
-                        case "checkpointInit":
+                        case "checkpointinit":
+                            String[] courseData = parms[1].split(",");
+                            String[] classData = Arrays.copyOfRange(parms, 2, parms.length);
+
+                            int courseNumber = Integer.parseInt(courseData[0]);
+                            String courseSection = courseData[1];
+                            String labNumber = courseData[2];
+                            String courseName = courseData[3];
+                            int numCheckpoints = Integer.parseInt(courseData[4]);
+
                             System.out.println("INFO: Invoking 'checkpointInit' command");
+                            String newSessionId = initCheckpoints(classData, courseNumber, courseSection, labNumber, numCheckpoints, courseName);
+
                             //doSomething();
-                            out.println("done " + input);
+
+                            out.println("Lab Session Created:  " + newSessionId);
                             break;
-                        case "checkpointSync":
+                        case "checkpointsync":
                             System.out.println("INFO: checkpointSync method invoked");
-                            boolean success = syncCheckpoints(parms[1], parms[2]);
+                            boolean success = syncCheckpoints(parms[1], input);
                             //String points = retrieveCheckpoints(parms[1],parms[2]);
                             out.println(success);//out to tablet
                             break;
@@ -216,7 +235,7 @@ public class Server
         // parse a sample xml file to an object and print values
         System.out.println(labsFilePath);
         LabState labState = helper.parseXML(labsFilePath, filename);
-        helper.writeFile(labState, labsFilePath);
+        helper.writeFile(labState, labsFilePath, 777, "A", "The Wardening");
 
         Student student = labState.getClassData().get(labState.getClassRoster().get(0));
         System.out.println("Lab Session ID: " + labState.getSessionId());
@@ -244,8 +263,8 @@ public class Server
             BufferedReader reader = new BufferedReader(new FileReader(file));
             content = reader.readLine();
             if(content == null){
-                System.out.println("Whoa, whoa, whoa. Empty file");
-                return "Error";
+                System.out.println("WARNING: Whoa, whoa, whoa. Empty empty temp file! We'll create one for you!");
+                return null;
             }
             return content;
         } catch (FileNotFoundException e) {
@@ -265,14 +284,18 @@ public class Server
      */
     public boolean initWorkingCheckpoints(String sessionId)
     {
-        String labSessionId = currentLabState.getSessionId();
-        Hashtable<String,Student> classData = currentLabState.getClassData();
-        ArrayList<String> classRoster = currentLabState.getClassRoster();
+        if (currentLabState == null)
+        {
 
+        }
+
+        String labSessionId = currentLabState.getSessionId();
+        Hashtable<String, Student> classData = currentLabState.getClassData();
+        ArrayList<String> classRoster = currentLabState.getClassRoster();
 
         if (!sessionId.equals(labSessionId))
         {
-            System.out.println("Whoa, whoa, whoa. Lab session ID mismatch");
+            System.out.println("Whoa, whoa, whoa. Lab session ID mismatch: " + sessionId + " and " + labSessionId);
             return false;
         }
 
@@ -307,7 +330,7 @@ public class Server
     }
 
     public boolean writeCheckpoints(String sessionId, String content) {
-        File file = new File(labsFilePath + "/" + sessionId +"-checkpoints.txt");
+        File file = new File(labsFilePathTemp + "/" + sessionId +"-checkpoints.txt");
         try {
             FileWriter write = new FileWriter(file.getAbsoluteFile());
             PrintWriter print_line = new PrintWriter(write);
@@ -324,16 +347,91 @@ public class Server
 
     public boolean syncCheckpoints(String sessionId, String tabletString) {
         String localString = retrieveCheckpoints(sessionId, "");
-        String mergedString = mergeCheckpoints(localString, tabletString);
-        return writeCheckpoints(sessionId, mergedString);
+        if (localString == null) {
+            tabletString = tabletString.replaceFirst("checkpointSync", "checkpoint");
+            return writeCheckpoints(sessionId, tabletString);
+        }
+        mergeCheckpoints(localString, tabletString);
+        return false;
+        //return writeCheckpoints(sessionId, mergedString);
     }
 
-    public String mergeCheckpoints(String localString, String tabletString) {
-        return "";
+    /**
+     * mergeTwo - a function that merges two Strings (that should represent checkpoint lists) into one
+     * format of the string should be CHECKPOINT#SESSION ID#name,cp1,cp2...#name,cp1,cp2... etc
+     * @param tabletString - the string from the tablet
+     * @param localString - the string stored on the server
+     */
+    public String[] mergeCheckpoints(String tabletString, String localString){
+        //Should be checkpointSync#<SessionId>#user,first,last#cp1,cp2...#user,first,last#cp1,cp2... etc
+        String[] myFields = tabletString.split("#");
+        String[] serverFields = localString.split("#");
+        String serversChecks = serverFields[2];
+
+
+        //merge them
+        //ignoring freshly checked for now
+        int rosterLength = currentLabState.getClassRoster().size();
+        int numChecks = currentLabState.getNumCheckpoints();
+        String[] mergeResult = new String[rosterLength];
+
+
+        //index 0 = type of message, index 1 = session id, everything else = checkpoint info for each student
+        for(int i = 2;i<myFields.length;i++){
+            //should be of format fullname,cp1,cp2...
+            String myCurrent = myFields[i];
+
+            //index 0 = name, everything else = checkpoint info
+            String[] parsedMine = myCurrent.split(",");
+            String[] parsedServer = serversChecks.split(",");
+
+            //should be the name
+            mergeResult[i-2] = parsedMine[0];
+
+            for(int j = 1;j<numChecks+1; j++){
+                if(parsedMine[j].equals("1") || parsedServer[j].equals("1")){
+                    mergeResult[i-2] = mergeResult[i-2] + ",1";
+                }
+                else{
+                    mergeResult[i-2] = mergeResult[i-2] + ",0";
+                }
+            }
+            mergeResult[i-2] = mergeResult[i-2] + "#";
+        }
+
+        return mergeResult;
     }
 
-    public String initCheckpoints() {
-        return "";
+    public String initCheckpoints(String[] parms, int courseId,String courseSection,
+                                  String labNumber, int numCheckpoints, String courseName) {
+        //777
+        //A
+        //01
+        // => 777A01
+
+        //parms input: array of the following
+        //userId,firstName,lastName,0,0,0
+        //userId,firstName,lastName,0,0,0
+        //userId,firstName,lastName,0,0,0
+
+        String sessionId = courseId + courseSection + labNumber;
+        Hashtable<String, Student> classData= new Hashtable();
+        ArrayList<String> classRoster = new ArrayList<String>();
+
+        for (String s : parms)
+        {
+            String[] studentData = s.split(",");
+            String[] checkpointData = Arrays.copyOfRange(studentData,3,studentData.length);
+            Student student = new Student(studentData[0], studentData[1], studentData[2], checkpointData);
+            classData.put(studentData[0],student);
+            classRoster.add(studentData[0]);
+        }
+
+        ArrayList<String> labQueue = new ArrayList<>();
+        LabState initLabState = new LabState(sessionId, classData, classRoster, labQueue, numCheckpoints);
+        helper.writeFile(initLabState, labsFilePath, courseId, courseSection, courseName);
+
+        return sessionId;
     }
 
     public boolean validatePath(String s) {

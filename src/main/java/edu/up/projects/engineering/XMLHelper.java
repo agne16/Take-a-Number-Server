@@ -80,15 +80,13 @@ public class XMLHelper
         return parsedState;
     }
 
-    public void writeFile(LabState labState, String dest)
+    public void writeFile(LabState labState, String dest, int courseId,
+                          String courseSection, String courseName)
     {
-        int courseID = 777;
-        String courseSection = "A";
-        String courseName = "The Wardening";
 
         try
         {
-            File file = new File(dest + "/CS" + courseSection + courseID + "-" + courseName + "-" + labState.getSessionId() + ".xml");
+            File file = new File(dest + "/CS" + courseId + "-" + courseSection + "-" + courseName + "-" + labState.getSessionId() + ".xml");
             if(!file.exists())
             {
                 if(!file.createNewFile()){

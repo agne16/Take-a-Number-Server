@@ -81,14 +81,14 @@ public class ServerClient {
     public void connectToServer() throws IOException {
 
         // Get the server address from a dialog box.
-        String serverAddress = JOptionPane.showInputDialog(
-                frame,
-                "Enter IP Address of the Server:",
-                "Welcome to the Capitalization Program",
-                JOptionPane.QUESTION_MESSAGE);
+//        String serverAddress = JOptionPane.showInputDialog(
+//                frame,
+//                "Enter IP Address of the Server:",
+//                "Welcome to the Capitalization Program",
+//                JOptionPane.QUESTION_MESSAGE);
 
         // Make connection and initialize streams
-        Socket socket = new Socket(serverAddress, 8080);
+        Socket socket = new Socket("192.168.1.144", 8080);
         in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         out = new PrintWriter(socket.getOutputStream(), true);
 
