@@ -83,7 +83,9 @@ public class XMLHelper
     public void writeFile(LabState labState, String dest, int courseId,
                           String courseSection, String courseName)
     {
-
+        labState.setCourseId(courseId);
+        labState.setCourseSection(courseSection);
+        labState.setCourseName(courseName);
         try
         {
             File file = new File(dest + "/CS" + courseId + "-" + courseSection + "-" + courseName + "-" + labState.getSessionId() + ".xml");

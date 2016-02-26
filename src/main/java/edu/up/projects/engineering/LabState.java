@@ -13,6 +13,11 @@ public class LabState
     private Hashtable<String, Student> classData;
     private int numCheckpoints;
 
+    private int courseId;
+    private String courseSection;
+    private String courseName;
+
+
     public LabState(String initSessionId, Hashtable<String,Student> initRoster, ArrayList<String> initClassRoster, ArrayList<String> initLabQueue, int initNumCheckpoints)
     {
         this.sessionId = initSessionId;
@@ -80,5 +85,35 @@ public class LabState
     public void setNumCheckpoints(int numCheckpoints)
     {
         this.numCheckpoints = numCheckpoints;
+    }
+
+    public int getCourseId()
+    {
+        return courseId;
+    }
+
+    public void setCourseId(int courseId)
+    {
+        this.courseId = courseId;
+    }
+
+    public String getCourseSection()
+    {
+        return courseSection;
+    }
+
+    public void setCourseSection(String courseSection)
+    {
+        this.courseSection = courseSection;
+    }
+
+    public String getCourseName()
+    {
+        return courseName;
+    }
+
+    public void setCourseName(String courseName)
+    {
+        this.courseName = courseName;
     }
 }
