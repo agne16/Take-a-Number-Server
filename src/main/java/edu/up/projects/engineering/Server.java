@@ -155,19 +155,9 @@ public class Server
                             System.out.println("INFO: checkpointSync method invoked");
 
                             //call checkpointSync with sessionId and the entire input. successes is reported
-                            boolean success = checkpointSync(parms[1], input);
+                            String changes = checkpointSync(parms[1], input);
 
-                            String message = "";
-                            if (success)
-                            {
-                                message = "checkpointSync succeeded";
-                            }
-                            else
-                            {
-                                message = "checkpointSync failed";
-                            }
-
-                            out.println(message);
+                            out.println(changes);
                             break;
                         case "ireallyreallywanttoclosetheserver":
                             System.out.println("Shutting down the server");
@@ -343,13 +333,14 @@ public class Server
      * @param tabletString full message received from tablet
      * @return boolean indicating success
      */
-    public boolean checkpointSync(String sessionId, String tabletString)
+    public String checkpointSync(String sessionId, String tabletString)
     {
         String localString = checkpointRetrieve(sessionId);
         tabletString = tabletString.replaceFirst("checkpointSync", "checkpoint");
         if (localString == null)//if server has nothing, just take the tablet info
         {
-            return checkpointWriteTemp(sessionId, tabletString);
+            checkpointWriteTemp(sessionId, tabletString);
+            return tabletString;
         }
         String mergedString = checkpointMerge(localString, tabletString);
 
@@ -362,7 +353,8 @@ public class Server
 
         helper.writeFile(ls, labsFilePath, courseId, courseSection, courseName);
 
-        return checkpointWriteTemp(sessionId, mergedString);//update the temp file
+        checkpointWriteTemp(sessionId, mergedString);//update the temp file
+        return mergedString;
     }
 
     /**
