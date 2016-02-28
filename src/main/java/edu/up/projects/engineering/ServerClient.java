@@ -88,7 +88,7 @@ public class ServerClient {
 //                JOptionPane.QUESTION_MESSAGE);
 
         // Make connection and initialize streams
-        Socket socket = new Socket("192.168.1.144", 8080);
+        Socket socket = new Socket("10.17.3.72", 8080);
         in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         out = new PrintWriter(socket.getOutputStream(), true);
 

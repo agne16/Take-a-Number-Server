@@ -31,6 +31,7 @@ public class Server
     XMLHelper helper = new XMLHelper();
     private LabState currentLabState;
     private Hashtable<String, LabState> runningStates = new Hashtable<String,LabState>();
+    String checkpointsTemp;
 
     /**
      * Called from ServerMain.main() as a new server instance
@@ -74,7 +75,7 @@ public class Server
                     e.printStackTrace();
                     System.exit(-1);
                 }
-                System.out.println("WARNING: Port " + port + "is in use. Incrementing an retrying.");
+                System.out.println("WARNING: Port " + port + " is in use. Incrementing and retrying.");
                 port++;
             }
         }
@@ -112,6 +113,7 @@ public class Server
 
                 while (true)
                 {
+                    System.out.println("INFO: Waiting for next action");
                     //read an interpret any incoming messages
                     String input = in.readLine();
                     input = input.trim();
@@ -131,6 +133,7 @@ public class Server
                         case "":
                         case ".":
                             System.out.println("Empty string received. Closing connection with client.");
+                            out.println("");
                             closed = true;  //closes connection with a client. server is still running
                             break;
                         case "checkpointinit":
@@ -149,7 +152,7 @@ public class Server
                             System.out.println("INFO: Invoking 'checkpointInit' command");
                             String newSessionId = checkpointInit(classData, courseNumber, courseSection, labNumber, numCheckpoints, courseName);
 
-                            out.println("Lab Session Created:  " + newSessionId);
+                            out.println("sessionId#:" + newSessionId);
                             break;
                         case "checkpointsync":
                             System.out.println("INFO: checkpointSync method invoked");
@@ -287,6 +290,7 @@ public class Server
             print_line.write(content);
             print_line.close();
             write.close();
+            checkpointsTemp = content;
             return true;
         }
         catch (IOException e)
@@ -305,6 +309,15 @@ public class Server
      */
     public boolean checkpointWriteTemp(String sessionId, String content)
     {
+        if (!content.equals(""))
+        {
+            checkpointsTemp = content;
+            System.out.println("INFO-new checkpoint variable: " + content);
+            return true;
+        }
+        return false;
+
+        /*
         File file = new File(labsFilePathTemp + "/" + sessionId + "-checkpoints.txt");
         if(!file.isFile())
         {
@@ -325,6 +338,7 @@ public class Server
             e.printStackTrace();
         }
         return false;
+        */
     }
 
     /**
@@ -366,6 +380,9 @@ public class Server
     public String checkpointRetrieve(String sessionId)
     {
         String content = "";
+        return checkpointsTemp;
+
+        /*
         File file = new File(labsFilePathTemp + "/" + sessionId + "-checkpoints.txt");
         if (!file.exists())
         {
@@ -394,6 +411,7 @@ public class Server
         }
 
         return content;
+        */
     }
 
     /**
