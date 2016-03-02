@@ -31,7 +31,7 @@ public class Server
     XMLHelper helper = new XMLHelper();
     private LabState currentLabState;
     private Hashtable<String, LabState> runningStates = new Hashtable<String,LabState>();
-    String checkpointsTemp;
+    //String checkpointsTemp;
 
     /**
      * Called from ServerMain.main() as a new server instance
@@ -116,6 +116,15 @@ public class Server
                     System.out.println("INFO: Waiting for next action");
                     //read an interpret any incoming messages
                     String input = in.readLine();
+                    boolean closed = false;
+                    if (input.equals("") || input.equals("."))
+                    {
+                        System.out.println("Empty string received. Closing connection with client.");
+                        out.println("");
+                        closed = true;  //closes connection with a client. server is still running
+                        break;
+                    }
+
                     input = input.trim();
                     System.out.println("Message received: " + input);
 
@@ -127,15 +136,15 @@ public class Server
 
                     //split the message into so-called "parameters"
                     String[] parms = input.split("#");
-                    boolean closed = false;
                     switch (parms[0].toLowerCase().trim())//first element of message; processed for interpretation
                     {
+                        /*
                         case "":
                         case ".":
                             System.out.println("Empty string received. Closing connection with client.");
                             out.println("");
                             closed = true;  //closes connection with a client. server is still running
-                            break;
+                            break;*/
                         case "checkpointinit":
                             //further split parameters into subparameters
                             String[] courseData = parms[1].split(",");
@@ -161,6 +170,26 @@ public class Server
                             String changes = checkpointSync(parms[1], input);
 
                             out.println(changes);
+                            break;
+                        case "sessionretrieve":
+                            //TODO cross check sessionId with regex
+                            String result = "";
+                            if (!runningStates.keySet().contains(parms[1].toUpperCase()))
+                            {
+                                System.out.println("Error in sessionRetrieve: session does not exist");
+                            }
+                            else
+                            {
+                                result = runningStates.get(parms[1]).getCondensedLabString();
+                                if (!result.equals(""))
+                                {
+                                    out.print(result);
+                                }
+                                else
+                                {
+                                    System.out.println("Empty file in sessionRetrieve");
+                                }
+                            }
                             break;
                         case "ireallyreallywanttoclosetheserver":
                             System.out.println("Shutting down the server");
@@ -290,7 +319,8 @@ public class Server
             print_line.write(content);
             print_line.close();
             write.close();
-            checkpointsTemp = content;
+            //checkpointsTemp = content;
+            runningStates.get(sessionId).setCondensedLabString(content);
             return true;
         }
         catch (IOException e)
@@ -311,7 +341,9 @@ public class Server
     {
         if (!content.equals(""))
         {
-            checkpointsTemp = content;
+            //checkpointsTemp = content;
+            runningStates.get(sessionId).setCondensedLabString(content);
+
             System.out.println("INFO-new checkpoint variable: " + content);
             return true;
         }
@@ -349,9 +381,9 @@ public class Server
      */
     public String checkpointSync(String sessionId, String tabletString)
     {
-        String localString = checkpointRetrieve(sessionId);
+        String localString = runningStates.get(sessionId).getCondensedLabString();
         tabletString = tabletString.replaceFirst("checkpointSync", "checkpoint");
-        if (localString == null)//if server has nothing, just take the tablet info
+        if (localString.equals(""))//if server has nothing, just take the tablet info
         {
             checkpointWriteTemp(sessionId, tabletString);
             return tabletString;
@@ -379,8 +411,8 @@ public class Server
      */
     public String checkpointRetrieve(String sessionId)
     {
-        String content = "";
-        return checkpointsTemp;
+        //String content = "";
+        return runningStates.get(sessionId).getCondensedLabString();
 
         /*
         File file = new File(labsFilePathTemp + "/" + sessionId + "-checkpoints.txt");
@@ -432,7 +464,7 @@ public class Server
         int rosterLength = currentLabState.getClassRoster().size();
         int numChecks = currentLabState.getNumCheckpoints();
         String mergeResult = "";
-        mergeResult = mergeResult + tabletFields[0] + "#" + tabletFields[1];
+        mergeResult = mergeResult + tabletFields[0] + "#" + tabletFields[1];//TODO tablet sending over empty string
 
         //index 0 = type of message, index 1 = session id, everything else = checkpoint info for each student
         for (int i = 2; i < tabletFields.length; i++)
@@ -465,6 +497,7 @@ public class Server
 
         return mergeResult;
     }
+
 
     /**
      * validatePath - check if a path exists or create it otherwise

@@ -17,6 +17,8 @@ public class LabState
     private String courseSection;
     private String courseName;
 
+    private String condensedLabString = "";
+
 
     public LabState(String initSessionId, Hashtable<String,Student> initRoster, ArrayList<String> initClassRoster, ArrayList<String> initLabQueue, int initNumCheckpoints)
     {
@@ -115,5 +117,15 @@ public class LabState
     public void setCourseName(String courseName)
     {
         this.courseName = courseName;
+    }
+
+    public String getCondensedLabString()
+    {
+        return condensedLabString;
+    }
+
+    public void setCondensedLabString(String condensedLabString)
+    {
+        this.condensedLabString = condensedLabString;
     }
 }
