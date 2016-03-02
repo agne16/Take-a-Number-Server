@@ -2,9 +2,6 @@ package edu.up.projects.engineering;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
@@ -31,7 +28,6 @@ public class Server
     XMLHelper helper = new XMLHelper();
     private LabState currentLabState;
     private Hashtable<String, LabState> runningStates = new Hashtable<String,LabState>();
-    //String checkpointsTemp;
 
     /**
      * Called from ServerMain.main() as a new server instance
@@ -138,13 +134,6 @@ public class Server
                     String[] parms = input.split("#");
                     switch (parms[0].toLowerCase().trim())//first element of message; processed for interpretation
                     {
-                        /*
-                        case "":
-                        case ".":
-                            System.out.println("Empty string received. Closing connection with client.");
-                            out.println("");
-                            closed = true;  //closes connection with a client. server is still running
-                            break;*/
                         case "checkpointinit":
                             //further split parameters into subparameters
                             String[] courseData = parms[1].split(",");
@@ -172,7 +161,6 @@ public class Server
                             out.println(changes);
                             break;
                         case "sessionretrieve":
-                            //TODO cross check sessionId with regex
                             String result = "";
                             if (!runningStates.keySet().contains(parms[1].toUpperCase()))
                             {
@@ -277,61 +265,6 @@ public class Server
     }
 
     /**
-     * Converts a lab session checkpoints to "network packet" format
-     *
-     * @param sessionId session id of the lab
-     * @return boolean indicating success
-     */
-    public boolean checkpointInitTemp(String sessionId)
-    {
-        currentLabState = runningStates.get(sessionId);
-        if (currentLabState == null)
-        {
-            System.out.println("Error: cannot retrieve checkpoints before they're initialized");
-            return false;
-        }
-
-        Hashtable<String, Student> classData = currentLabState.getClassData();
-        ArrayList<String> classRoster = currentLabState.getClassRoster();
-
-        File file = new File(labsFilePathTemp + "/" + sessionId + "-checkpoints.txt");
-        try
-        {
-            FileWriter write = new FileWriter(file.getAbsoluteFile());
-            PrintWriter print_line = new PrintWriter(write);
-
-            //begin format of string
-            String content = "checkpoint";
-            content = content + "#" + sessionId;
-            for (String s : classRoster)
-            {
-                Student student = classData.get(s);
-                String[] checkpoints = student.getCheckpoints();
-                content = content + "#" + student.getUserId();
-                content = content + "," + student.getFirstName();
-                content = content + "," + student.getLastName();
-                content = content + "," + checkpoints[0];
-                for (int i = 1; i < checkpoints.length; i++)
-                {
-                    content = content + "," + checkpoints[i];
-                }
-            }
-            print_line.write(content);
-            print_line.close();
-            write.close();
-            //checkpointsTemp = content;
-            runningStates.get(sessionId).setCondensedLabString(content);
-            return true;
-        }
-        catch (IOException e)
-        {
-            e.printStackTrace();
-        }
-
-        return false;
-    }
-
-    /**
      * Write checkpoints to a temporary file
      * @param sessionId session id of the lab
      * @param content the one line string to write
@@ -348,29 +281,6 @@ public class Server
             return true;
         }
         return false;
-
-        /*
-        File file = new File(labsFilePathTemp + "/" + sessionId + "-checkpoints.txt");
-        if(!file.isFile())
-        {
-            System.out.println("File does not exist in checkpointWriteTemp()");
-            return false;
-        }
-        try
-        {
-            FileWriter write = new FileWriter(file.getAbsoluteFile());
-            PrintWriter print_line = new PrintWriter(write);
-            print_line.write(content);
-            print_line.close();
-            write.close();
-            return true;
-        }
-        catch (IOException e)
-        {
-            e.printStackTrace();
-        }
-        return false;
-        */
     }
 
     /**
@@ -403,48 +313,6 @@ public class Server
         return mergedString;
     }
 
-    /**
-     * Retrieves "network packet" format for checkpoints from file
-     *
-     * @param sessionId session id of the lab
-     * @return content read from the file
-     */
-    public String checkpointRetrieve(String sessionId)
-    {
-        //String content = "";
-        return runningStates.get(sessionId).getCondensedLabString();
-
-        /*
-        File file = new File(labsFilePathTemp + "/" + sessionId + "-checkpoints.txt");
-        if (!file.exists())
-        {
-            if (!checkpointInitTemp(sessionId))
-            {
-                return "Error in checkpointRetrieve";
-            }
-        }
-        try
-        {
-            BufferedReader reader = new BufferedReader(new FileReader(file));
-            content = reader.readLine();
-            if (content == null)
-            {
-                System.out.println("WARNING: Whoa, whoa, whoa. Empty empty temp file!");
-            }
-            return content;
-        }
-        catch (FileNotFoundException e)
-        {
-            e.printStackTrace();
-        }
-        catch (IOException e)
-        {
-            e.printStackTrace();
-        }
-
-        return content;
-        */
-    }
 
     /**
      * checkpointMerge - a function that merges two Strings (that should represent checkpoint lists) into one
@@ -461,10 +329,8 @@ public class Server
 
         //merge them
         //ignoring freshly checked for now
-        int rosterLength = currentLabState.getClassRoster().size();
-        int numChecks = currentLabState.getNumCheckpoints();
         String mergeResult = "";
-        mergeResult = mergeResult + tabletFields[0] + "#" + tabletFields[1];//TODO tablet sending over empty string
+        mergeResult = mergeResult + tabletFields[0] + "#" + tabletFields[1];
 
         //index 0 = type of message, index 1 = session id, everything else = checkpoint info for each student
         for (int i = 2; i < tabletFields.length; i++)
@@ -515,24 +381,6 @@ public class Server
     }
 
     /**
-     * Create a LabState object given a LabSession object
-     *
-     * @param labSession - the LabSession object to convert
-     * @return the LabState
-     */
-    public LabState initLabState(LabSession labSession)
-    {
-        String sessionId = labSession.getSessionId();
-        int numCheckpoints = labSession.getNumCheckpoints();
-        String[] classRoster = labSession.getClassRoster();
-        boolean[][] checkpoints = labSession.getCheckpoints();
-        ArrayList<String> labQueue = labSession.getLabQueue();
-
-        return null;
-        //return new LabState(sessionId, classRoster, checkpoints, labQueue);
-    }
-
-    /**
      * Creates a lab state from a network packet string assuming the following format
      * checkpointSync#271B02#userId,firstName,lastName,0,0,0...#userId,firstName,lastName,0,0,0
      * @param packet
@@ -580,24 +428,6 @@ public class Server
         }
 
         return false;
-    }
-
-    public void doSomething()
-    {
-        String filename = "CS371-C-ComputerScienceLaboratory-64378.xml"; // filename
-
-        // write a sample xml file
-        XMLHelper helper = new XMLHelper();
-
-        // parse a sample xml file to an object and print values
-        System.out.println(labsFilePath);
-        LabState labState = helper.parseXML(labsFilePath, filename);
-        helper.writeFile(labState, labsFilePath, 777, "A", "The Wardening");
-
-        Student student = labState.getClassData().get(labState.getClassRoster().get(0));
-        System.out.println("Lab Session ID: " + labState.getSessionId());
-        System.out.println("Student: " + student.getUserId());
-        System.out.println("Checkpoint 1: " + student.getCheckpoints()[0]);
     }
 
 }
