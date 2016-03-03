@@ -261,6 +261,13 @@ public class Server
         }
         helper.writeFile(initLabState, labsFilePath, courseId, courseSection, courseName);
 
+        String checkpointContent = "checkpoint#" + sessionId;
+        for (String chk : parms)
+        {
+            checkpointContent += "#" + chk;
+        }
+        checkpointWriteTemp(sessionId, checkpointContent);
+
         return sessionId;
     }
 
