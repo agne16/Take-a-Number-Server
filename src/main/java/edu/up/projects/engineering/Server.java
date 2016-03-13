@@ -260,20 +260,59 @@ public class Server extends WebSocketServer
         return new LabState(sessionId,classData,classRoster,labQueue,numCheckpoints);
     }
 
-    public boolean authenticateStudent(String classRosterPath, String studentID, String filename) throws IOException
+    public boolean authenticateStudent(String studentId, String sessionId)
     {
-
-        XMLHelper helper = new XMLHelper();
-        LabState labState = helper.parseXML(classRosterPath, filename); // parse the given XML
+        if (!runningStates.keySet().contains(sessionId.toUpperCase()))
+        {
+            System.out.println("Error in sessionRetrieve: session does not exist");
+        }
+        LabState labState = runningStates.get(sessionId);
 
         for (String stuID : labState.getClassRoster())
         { // Check each student in roster
 
-            if (stuID.equals(studentID))
+            if (stuID.equals(studentId))
                 return true;
         }
 
         return false;
+    }
+
+    public boolean enterQueue(String studentId, String sessionId)
+    {
+        if (!runningStates.keySet().contains(sessionId.toUpperCase()))
+        {
+            System.out.println("Error in enterQueue: session does not exist");
+        }
+        LabState labState = runningStates.get(sessionId);
+        ArrayList<String> queue = labState.getLabQueue();
+
+        if (queue.contains(studentId))
+        {
+            return false;
+        }
+
+        queue.add(studentId);
+        return true;
+    }
+
+    public boolean leaveQueue(String studentId, String sessionId)
+    {
+        if (!runningStates.keySet().contains(sessionId.toUpperCase()))
+        {
+            System.out.println("Error in leaveQueue: session does not exist");
+        }
+        LabState labState = runningStates.get(sessionId);
+        ArrayList<String> queue = labState.getLabQueue();
+
+        if (queue.contains(studentId))
+        {
+            queue.remove(studentId);
+            return true;
+        }
+
+        queue.add(studentId);
+        return true;
     }
 
     public void interpretMessage(WebSocket conn, String s)
@@ -343,6 +382,46 @@ public class Server extends WebSocketServer
                     }
                 }
                 break;
+            case "authenticate":
+                if (authenticateStudent(parms[1], parms[2]))
+                {
+                    conn.send("User " + parms[1] + " found.");
+                }
+                else
+                {
+                    conn.send("User " + parms[1] + " not found.");
+                }
+                break;
+            case "enterqueue":
+                if (enterQueue(parms[1], parms[2]))
+                {
+                    conn.send("User " + parms[1] + " has been added to the queue.");
+                }
+                else
+                {
+                    conn.send("User " + parms[1] + " already exists in queue.");
+                }
+                break;
+            case "leavequeue":
+                if (leaveQueue(parms[1], parms[2]))
+                {
+                    conn.send("User " + parms[1] + " has been removed from the queue.");
+                }
+                else
+                {
+                    conn.send("User " + parms[1] + " was not in the queue.");
+                }
+                break;
+            case "getqueue":
+                String sessionId = parms[1];
+                if (!runningStates.keySet().contains(sessionId.toUpperCase()))
+                {
+                    System.out.println("Error in leaveQueue: session does not exist");
+                }
+                LabState labState = runningStates.get(sessionId);
+                String queue = labState.getLabQueue().toString();
+                conn.send(queue);
+                break;
             case "ireallyreallywanttoclosetheserver":
                 System.out.println("Shutting down the server");
                 conn.send("Shutting down the server");
@@ -353,5 +432,4 @@ public class Server extends WebSocketServer
                 break;
         }
     }
-
 }
