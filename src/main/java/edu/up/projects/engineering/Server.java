@@ -1,15 +1,12 @@
 package edu.up.projects.engineering;
 
-import java.io.BufferedReader;
+import org.java_websocket.WebSocket;
+import org.java_websocket.handshake.ClientHandshake;
+import org.java_websocket.server.WebSocketServer;
+
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Hashtable;
@@ -18,200 +15,43 @@ import java.util.Hashtable;
  * based on http://cs.lmu.edu/~ray/notes/javanetexamples/
  * A Capitalization Server and Client
  */
-public class Server
+public class Server extends WebSocketServer
 {
     String rootPath = System.getProperty("user.dir");   //root of project folder
     private String labsFilePath = rootPath + "/LabSessions";
-    private String labsFilePathTemp = rootPath + "/LabTemp";
-    private String rosterCsvFilePath;
 
     XMLHelper helper = new XMLHelper();
-    private LabState currentLabState;
     private Hashtable<String, LabState> runningStates = new Hashtable<String,LabState>();
 
-    /**
-     * Called from ServerMain.main() as a new server instance
-     *
-     * @throws IOException
-     */
-    public void runServer() throws IOException
+    public Server(InetSocketAddress address)
     {
-        String serverAddress = "";
-        int port = 8080;
-
-        //determine ip address of machine
-        InetAddress ip;
-        try
-        {
-            ip = InetAddress.getLocalHost();
-            serverAddress = ip.toString().split("/")[1];
-        }
-        catch (UnknownHostException e)
-        {
-            e.printStackTrace();
-        }
-
-        validatePath(labsFilePath);
-        validatePath(labsFilePathTemp);
-
-        //create an always listening server
-        //find a port over our 8080..8090 range
-        ServerSocket listener = new ServerSocket();
-        while (port <= 8090)
-        {
-            try
-            {
-                listener.bind(new InetSocketAddress(serverAddress, port));
-                break;
-            }
-            catch(IOException e)
-            {
-                if (port == 8090){
-                    System.out.println("Port 8090 is in use. We've run out of ports");
-                    e.printStackTrace();
-                    System.exit(-1);
-                }
-                System.out.println("WARNING: Port " + port + " is in use. Incrementing and retrying.");
-                port++;
-            }
-        }
-        System.out.println("Program Server started and reachable at " + serverAddress + ":" + port);
-        try
-        {
-            while (true)
-            {
-                //create a new instance of a class that reads a network input
-                new Connection(listener.accept()).start();
-            }
-        }
-        finally
-        {
-            listener.close();
-        }
+        super(address);
     }
 
-    private class Connection extends Thread
+    @Override
+    public void onOpen(WebSocket conn, ClientHandshake handshake)
     {
-        private Socket socket;
-
-        public Connection(Socket socket)
-        {
-            this.socket = socket;
-            System.out.println("New connection with client at " + socket);
-        }
-
-        public void run()
-        {
-            try
-            {
-                BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-                PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
-
-                while (true)
-                {
-                    System.out.println("INFO: Waiting for next action");
-                    //read an interpret any incoming messages
-                    String input = in.readLine();
-                    boolean closed = false;
-                    if (input.equals("") || input.equals("."))
-                    {
-                        System.out.println("Empty string received. Closing connection with client.");
-                        out.println("");
-                        closed = true;  //closes connection with a client. server is still running
-                        break;
-                    }
-
-                    input = input.trim();
-                    System.out.println("Message received: " + input);
-
-                    //do note that ServerClient.java will always expect a reply back
-
-                    //acceptable formats for method invoked messages:
-                    //checkpointInit#271,B,02,ComputerScienceLaboratory,3#userId,firstName,lastName,0,0,0...#userId,firstName,lastName,0,0,0
-                    //checkpointSync#271B02#userId,firstName,lastName,0,0,0...#userId,firstName,lastName,0,0,0
-
-                    //split the message into so-called "parameters"
-                    String[] parms = input.split("#");
-                    switch (parms[0].toLowerCase().trim())//first element of message; processed for interpretation
-                    {
-                        case "checkpointinit":
-                            //further split parameters into subparameters
-                            String[] courseData = parms[1].split(",");
-                            String[] classData = Arrays.copyOfRange(parms, 2, parms.length);
-
-                            //extract
-                            int courseNumber = Integer.parseInt(courseData[0]);
-                            String courseSection = courseData[1];
-                            String labNumber = courseData[2];
-                            String courseName = courseData[3];
-                            int numCheckpoints = Integer.parseInt(courseData[4]);
-
-                            //create lab sessions, files
-                            System.out.println("INFO: Invoking 'checkpointInit' command");
-                            String newSessionId = checkpointInit(classData, courseNumber, courseSection, labNumber, numCheckpoints, courseName);
-
-                            out.println("sessionId#:" + newSessionId);
-                            break;
-                        case "checkpointsync":
-                            System.out.println("INFO: checkpointSync method invoked");
-
-                            //call checkpointSync with sessionId and the entire input. successes is reported
-                            String changes = checkpointSync(parms[1], input);
-
-                            out.println(changes);
-                            break;
-                        case "sessionretrieve":
-                            String result = "";
-                            if (!runningStates.keySet().contains(parms[1].toUpperCase()))
-                            {
-                                System.out.println("Error in sessionRetrieve: session does not exist");
-                            }
-                            else
-                            {
-                                result = runningStates.get(parms[1]).getCondensedLabString();
-                                if (!result.equals(""))
-                                {
-                                    out.print(result);
-                                }
-                                else
-                                {
-                                    System.out.println("Empty file in sessionRetrieve");
-                                }
-                            }
-                            break;
-                        case "ireallyreallywanttoclosetheserver":
-                            System.out.println("Shutting down the server");
-                            out.println("Shutting down the server");
-                            System.exit(0);
-                        default:
-                            out.println("nothing doing");
-                            break;
-                    }
-                    if (closed)//if a client has requested to disconnect
-                    {
-                        break;
-                    }
-                }
-            }
-            catch (IOException e)
-            {
-                e.printStackTrace();
-            }
-            finally
-            {
-                try
-                {
-                    socket.close();
-                }
-                catch (IOException e)
-                {
-                    System.out.println("Couldn't close a socket, what's going on?");
-                }
-                System.out.println("Connection with client closed");
-            }
-        }
+        System.out.println("new connection to " + conn.getRemoteSocketAddress());
     }
 
+    @Override
+    public void onClose(WebSocket conn, int code, String reason, boolean remote)
+    {
+        System.out.println("closed " + conn.getRemoteSocketAddress() + " with exit code " + code + " additional info: " + reason);
+    }
+
+    @Override
+    public void onMessage(WebSocket conn, String message)
+    {
+        System.out.println("received message from " + conn.getRemoteSocketAddress() + ": " + message);
+        interpretMessage(conn, message);
+    }
+
+    @Override
+    public void onError(WebSocket conn, Exception ex)
+    {
+        System.err.println("an error occured on connection " + conn.getRemoteSocketAddress() + ":" + ex);
+    }
 
     /**
      * checkpointInit recieves an initial string from a tablet to create all possibles things
@@ -254,7 +94,6 @@ public class Server
         //create LabState, add to hashtable, write file
         ArrayList<String> labQueue = new ArrayList<>();
         LabState initLabState = new LabState(sessionId, classData, classRoster, labQueue, numCheckpoints);
-        currentLabState = initLabState;
         if (runningStates.get(sessionId) == null)
         {
             runningStates.put(sessionId, initLabState);
@@ -435,6 +274,84 @@ public class Server
         }
 
         return false;
+    }
+
+    public void interpretMessage(WebSocket conn, String s)
+    {
+        String input = s;
+        if (input.equals("") || input.equals("."))
+        {
+            //close the connection
+        }
+
+        input = input.trim();
+        System.out.println("Message received: " + input);
+
+        //do note that ServerClient.java will always expect a reply back
+
+        //acceptable formats for method invoked messages:
+        //checkpointInit#271,B,02,ComputerScienceLaboratory,3#userId,firstName,lastName,0,0,0...#userId,firstName,lastName,0,0,0
+        //checkpointSync#271B02#userId,firstName,lastName,0,0,0...#userId,firstName,lastName,0,0,0
+
+        //split the message into so-called "parameters"
+        String[] parms = input.split("#");
+        switch (parms[0].toLowerCase().trim())//first element of message; processed for interpretation
+        {
+            case "checkpointinit":
+                //further split parameters into subparameters
+                String[] courseData = parms[1].split(",");
+                String[] classData = Arrays.copyOfRange(parms, 2, parms.length);
+
+                //extract
+                int courseNumber = Integer.parseInt(courseData[0]);
+                String courseSection = courseData[1];
+                String labNumber = courseData[2];
+                String courseName = courseData[3];
+                int numCheckpoints = Integer.parseInt(courseData[4]);
+
+                //create lab sessions, files
+                System.out.println("INFO: Invoking 'checkpointInit' command");
+                String newSessionId = checkpointInit(classData, courseNumber, courseSection, labNumber, numCheckpoints, courseName);
+
+                conn.send("sessionId#" + newSessionId);//format: sessionId#123A01
+                break;
+            case "checkpointsync":
+                System.out.println("INFO: checkpointSync method invoked");
+
+                //call checkpointSync with sessionId and the entire input. successes is reported
+                String changes = checkpointSync(parms[1], input);
+                changes = changes.replaceFirst("checkpoint", "checkpointSync");
+                conn.send(changes);//format: checkpointSync#...
+                break;
+            case "sessionretrieve":
+                String result = "";
+                if (!runningStates.keySet().contains(parms[1].toUpperCase()))
+                {
+                    System.out.println("Error in sessionRetrieve: session does not exist");
+                }
+                else
+                {
+                    result = runningStates.get(parms[1]).getCondensedLabString();
+                    if (!result.equals(""))
+                    {
+                        result = result.replaceFirst("checkpoint", "checkpointRetrieve");
+                        conn.send(result);
+                    }
+                    else
+                    {
+                        System.out.println("Empty file in sessionRetrieve");
+                    }
+                }
+                break;
+            case "ireallyreallywanttoclosetheserver":
+                System.out.println("Shutting down the server");
+                conn.send("Shutting down the server");
+                System.exit(0);
+            default:
+                //System.out.println("nothing doing");
+                conn.send("nothing doing");
+                break;
+        }
     }
 
 }
