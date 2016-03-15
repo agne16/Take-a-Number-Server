@@ -1,14 +1,11 @@
 package edu.up.projects.engineering;
 
+import org.java_websocket.server.WebSocketServer;
+
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.ServerSocket;
 import java.net.UnknownHostException;
-
-import org.java_websocket.WebSocket;
-import org.java_websocket.handshake.ClientHandshake;
-import org.java_websocket.server.WebSocketServer;
 
 public class ServerMain
 {

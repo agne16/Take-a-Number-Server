@@ -5,7 +5,6 @@ import org.java_websocket.handshake.ClientHandshake;
 import org.java_websocket.server.WebSocketServer;
 
 import java.io.File;
-import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -23,6 +22,9 @@ public class Server extends WebSocketServer
     XMLHelper helper = new XMLHelper();
     private Hashtable<String, LabState> runningStates = new Hashtable<String,LabState>();
 
+    ArrayList<WebSocket> allConnections = new ArrayList<WebSocket>();
+    ArrayList<WebSocket> tabConnections = new ArrayList<WebSocket>();
+
     public Server(InetSocketAddress address)
     {
         super(address);
@@ -31,12 +33,15 @@ public class Server extends WebSocketServer
     @Override
     public void onOpen(WebSocket conn, ClientHandshake handshake)
     {
+        allConnections.add(conn);
         System.out.println("new connection to " + conn.getRemoteSocketAddress());
     }
 
     @Override
     public void onClose(WebSocket conn, int code, String reason, boolean remote)
     {
+        allConnections.remove(conn);
+        tabConnections.remove(conn);
         System.out.println("closed " + conn.getRemoteSocketAddress() + " with exit code " + code + " additional info: " + reason);
     }
 
@@ -76,6 +81,7 @@ public class Server extends WebSocketServer
     public String checkpointInit(String[] parms, int courseId, String courseSection,
                                  String labNumber, int numCheckpoints, String courseName)
     {
+        validatePath(labsFilePath);
         //the sessionId is just a composite of elements from the course data
         String sessionId = courseId + courseSection + labNumber;
 
@@ -360,7 +366,10 @@ public class Server extends WebSocketServer
                 //call checkpointSync with sessionId and the entire input. successes is reported
                 String changes = checkpointSync(parms[1], input);
                 changes = changes.replaceFirst("checkpoint", "checkpointSync");
-                conn.send(changes);//format: checkpointSync#...
+                for(WebSocket connection : tabConnections)
+                {
+                    connection.send(changes);//format: checkpointSync#...
+                }
                 break;
             case "sessionretrieve":
                 String result = "";
@@ -422,10 +431,17 @@ public class Server extends WebSocketServer
                 String queue = labState.getLabQueue().toString();
                 conn.send(queue);
                 break;
+            case "identify":
+                if (parms[1].equals("tablet"))
+                {
+                    tabConnections.add(conn);
+                }
+                break;
             case "ireallyreallywanttoclosetheserver":
                 System.out.println("Shutting down the server");
                 conn.send("Shutting down the server");
                 System.exit(0);
+                break;
             default:
                 //System.out.println("nothing doing");
                 conn.send("nothing doing");
