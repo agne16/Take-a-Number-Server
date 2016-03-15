@@ -4,6 +4,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Hashtable;
 
+/**
+ * LabState class
+ */
 public class LabState
 {
     private String sessionId;
@@ -20,6 +23,15 @@ public class LabState
     private String condensedLabString = "";
 
 
+    /**
+     * Constructor for a labstate
+     *
+     * @param initSessionId the sessionId of the new lab
+     * @param initRoster HashTable of @Student objects with their studentId as the key
+     * @param initClassRoster ArrayList of just the student's userIds
+     * @param initLabQueue Empty ArrayList of String that will hold the queue
+     * @param initNumCheckpoints the number of checkpoints of the lab
+     */
     public LabState(String initSessionId, Hashtable<String,Student> initRoster, ArrayList<String> initClassRoster, ArrayList<String> initLabQueue, int initNumCheckpoints)
     {
         this.sessionId = initSessionId;

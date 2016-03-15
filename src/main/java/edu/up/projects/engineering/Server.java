@@ -1,5 +1,6 @@
 package edu.up.projects.engineering;
 
+import org.jasypt.util.text.BasicTextEncryptor;
 import org.java_websocket.WebSocket;
 import org.java_websocket.handshake.ClientHandshake;
 import org.java_websocket.server.WebSocketServer;
@@ -30,6 +31,9 @@ public class Server extends WebSocketServer
         super(address);
     }
 
+    //
+    //Start of WebSocketServer implementation
+    //
     @Override
     public void onOpen(WebSocket conn, ClientHandshake handshake)
     {
@@ -50,6 +54,11 @@ public class Server extends WebSocketServer
     public void onMessage(WebSocket conn, String message)
     {
         System.out.println("received message from " + conn.getRemoteSocketAddress() + ": " + message);
+        String header = message.split("#")[0].toLowerCase();
+        if(header.equals("encrypted"))
+        {
+            message = decrypt(message.substring(message.indexOf("#") + 1));
+        }
         interpretMessage(conn, message);
     }
 
@@ -58,6 +67,9 @@ public class Server extends WebSocketServer
     {
         System.err.println("an error occured on connection " + conn.getRemoteSocketAddress() + ":" + ex);
     }
+    //
+    //End of WebSocketServer Implementation
+    //
 
     /**
      * checkpointInit recieves an initial string from a tablet to create all possibles things
@@ -176,45 +188,6 @@ public class Server extends WebSocketServer
      */
     public String checkpointMerge(String localString, String tabletString)
     {
-        /*
-        //Should be checkpointSync#<SessionId>#user,first,last#cp1,cp2...#user,first,last#cp1,cp2... etc
-        String[] tabletFields = tabletString.split("#");
-        String[] serverFields = localString.split("#");
-
-        //merge them
-        //ignoring freshly checked for now
-        String mergeResult = "";
-        mergeResult = mergeResult + tabletFields[0] + "#" + tabletFields[1];
-
-        //index 0 = type of message, index 1 = session id, everything else = checkpoint info for each student
-        for (int i = 2; i < tabletFields.length; i++)
-        {
-            //should be of format user,first,last,cp1,cp2...
-            String currTabletString = tabletFields[i];
-            String currServerString = serverFields[i];
-
-            //index 0 = name, everything else = checkpoint info
-            String[] parsedTablet = currTabletString.split(",");
-            String[] parsedServer = currServerString.split(",");
-
-            //should be the name
-            mergeResult = mergeResult + "#" + parsedTablet[0];
-            mergeResult = mergeResult + "," + parsedTablet[1];
-            mergeResult = mergeResult + "," + parsedTablet[2];
-
-            for (int j = 3; j < parsedTablet.length; j++)
-            {
-                if (parsedTablet[j].equals("1") || parsedServer[j].equals("1"))
-                {
-                    mergeResult = mergeResult + ",1";
-                }
-                else
-                {
-                    mergeResult = mergeResult + ",0";
-                }
-            }
-        }
-        */
         //Since server is always updating, consider the tablet to be the most updated
         String mergeResult = tabletString;
         return mergeResult;
@@ -270,6 +243,13 @@ public class Server extends WebSocketServer
         return new LabState(sessionId,classData,classRoster,labQueue,numCheckpoints);
     }
 
+    /**
+     * Helper method to see if a student is part of a lab sessioin
+     *
+     * @param studentId the student's id
+     * @param sessionId the session id
+     * @return true if success, else false
+     */
     public boolean authenticateStudent(String studentId, String sessionId)
     {
         if (!runningStates.keySet().contains(sessionId.toUpperCase()))
@@ -288,6 +268,13 @@ public class Server extends WebSocketServer
         return false;
     }
 
+    /**
+     * Helper method for a student to enter the queue
+     *
+     * @param studentId the student's id
+     * @param sessionId the session id
+     * @return true if success, else false
+     */
     public boolean enterQueue(String studentId, String sessionId)
     {
         if (!runningStates.keySet().contains(sessionId.toUpperCase()))
@@ -306,6 +293,13 @@ public class Server extends WebSocketServer
         return true;
     }
 
+    /**
+     * Helper method for a student to leave the queue
+     *
+     * @param studentId the student's id
+     * @param sessionId the session id
+     * @return true if success, else false
+     */
     public boolean leaveQueue(String studentId, String sessionId)
     {
         if (!runningStates.keySet().contains(sessionId.toUpperCase()))
@@ -325,6 +319,12 @@ public class Server extends WebSocketServer
         return true;
     }
 
+    /**
+     * Helper method to interpret an incoming message
+     *
+     * @param conn the direct connection from whom you recieve the message
+     * @param s = the string that was received
+     */
     public void interpretMessage(WebSocket conn, String s)
     {
         String input = s;
@@ -362,7 +362,7 @@ public class Server extends WebSocketServer
                 System.out.println("INFO: Invoking 'checkpointInit' command");
                 String newSessionId = checkpointInit(classData, courseNumber, courseSection, labNumber, numCheckpoints, courseName);
 
-                conn.send("sessionId#" + newSessionId);//format: sessionId#123A01
+                conn.send(encrypt("sessionId#" + newSessionId));//format: sessionId#123A01
                 break;
             case "checkpointsync":
                 System.out.println("INFO: checkpointSync method invoked");
@@ -387,7 +387,7 @@ public class Server extends WebSocketServer
                     if (!result.equals(""))
                     {
                         result = result.replaceFirst("checkpoint", "checkpointRetrieve");
-                        conn.send(result);
+                        conn.send(encrypt(result));
                     }
                     else
                     {
@@ -398,31 +398,31 @@ public class Server extends WebSocketServer
             case "authenticate":
                 if (authenticateStudent(parms[1], parms[2]))
                 {
-                    conn.send("User " + parms[1] + " found.");
+                    conn.send(encrypt("User " + parms[1] + " found."));
                 }
                 else
                 {
-                    conn.send("User " + parms[1] + " not found.");
+                    conn.send(encrypt("User " + parms[1] + " not found."));
                 }
                 break;
             case "enterqueue":
                 if (enterQueue(parms[1], parms[2]))
                 {
-                    conn.send("User " + parms[1] + " has been added to the queue.");
+                    conn.send(encrypt("User " + parms[1] + " has been added to the queue."));
                 }
                 else
                 {
-                    conn.send("User " + parms[1] + " already exists in queue.");
+                    conn.send(encrypt("User " + parms[1] + " already exists in queue."));
                 }
                 break;
             case "leavequeue":
                 if (leaveQueue(parms[1], parms[2]))
                 {
-                    conn.send("User " + parms[1] + " has been removed from the queue.");
+                    conn.send(encrypt("User " + parms[1] + " has been removed from the queue."));
                 }
                 else
                 {
-                    conn.send("User " + parms[1] + " was not in the queue.");
+                    conn.send(encrypt("User " + parms[1] + " was not in the queue."));
                 }
                 break;
             case "getqueue":
@@ -433,7 +433,7 @@ public class Server extends WebSocketServer
                 }
                 LabState labState = runningStates.get(sessionId);
                 String queue = labState.getLabQueue().toString();
-                conn.send(queue);
+                conn.send(encrypt(queue));
                 break;
             case "identify":
                 if (parms[1].equals("tablet"))
@@ -444,13 +444,43 @@ public class Server extends WebSocketServer
                 break;
             case "ireallyreallywanttoclosetheserver":
                 System.out.println("Shutting down the server");
-                conn.send("Shutting down the server");
+                conn.send(encrypt("Shutting down the server"));
                 System.exit(0);
                 break;
             default:
                 //System.out.println("nothing doing");
-                conn.send("nothing doing");
+                conn.send(encrypt("nothing doing"));
                 break;
         }
+    }
+
+    /**
+     * Encrypts a string using Jasypt
+     *
+     * @param s the string to be encrypted
+     * @return the encrypted string with a "encrypted#" header appended to the beginning
+     */
+    public String encrypt(String s)
+    {
+        BasicTextEncryptor textEncryptor = new BasicTextEncryptor();
+        textEncryptor.setPassword("ForTheLulz");
+        String myEncryptedText = textEncryptor.encrypt(s);
+        String payload = "encrypted#" + myEncryptedText;
+        return payload;
+    }
+
+    /**
+     * Decrypts a string using Jasypt
+     *
+     * @param s the string to be decrypted ("encrypted#" header must be stripped off first)
+     * @return the decrypted string in plain text
+     */
+    public String decrypt(String s)
+    {
+        BasicTextEncryptor textEncryptor = new BasicTextEncryptor();
+        textEncryptor.setPassword("ForTheLulz");
+        String plainText = textEncryptor.decrypt(s);
+        return plainText;
+
     }
 }

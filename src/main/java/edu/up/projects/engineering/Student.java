@@ -1,7 +1,7 @@
 package edu.up.projects.engineering;
 
 /**
- * Created by TJ on 2/24/2016.
+ * Student object class
  */
 public class Student
 {
@@ -10,6 +10,14 @@ public class Student
     private String userId;
     private String[] checkpoints;
 
+    /**
+     * Constructor for a Student object
+     *
+     * @param initUserId the student's userId (ex: doe16)
+     * @param initFirstName the student's first name (ex: john)
+     * @param initLastName the student's last name (ex: doe)
+     * @param initCheckpoints a string array of checkpoints completed (ex: [1, 1, 0, 0])
+     */
     public Student(String initUserId, String initFirstName, String initLastName, String[] initCheckpoints)
     {
         this.userId = initUserId;

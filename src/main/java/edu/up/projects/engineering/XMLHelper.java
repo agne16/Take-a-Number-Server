@@ -13,7 +13,9 @@ import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
 
-
+/**
+ * XML Helper pertains to reading and writing of XML files that persist on the server
+ */
 public class XMLHelper
 {
     /**
@@ -80,6 +82,14 @@ public class XMLHelper
         return parsedState;
     }
 
+    /**
+     *
+     * @param labState the labstate that will be written to xml
+     * @param dest the base folder of where to write the file
+     * @param courseId courseId (Course number. ex: 273)
+     * @param courseSection courseSection (One uppercase character)
+     * @param courseName courseName (no spaces, CapitalizedForReadability)
+     */
     public void writeFile(LabState labState, String dest, int courseId,
                           String courseSection, String courseName)
     {

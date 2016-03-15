@@ -7,6 +7,9 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 
+/**
+ * The entrypoint of the program
+ */
 public class ServerMain
 {
     public static void main(String[] args) throws IOException
@@ -28,7 +31,7 @@ public class ServerMain
         WebSocketServer server = new Server(new InetSocketAddress(host, port));
         System.out.println("Starting server on " + host + ":" + port);
 
-
+        //TODO this code os to help increment a port number if it's in use
 //        while (port <= 8090)
 //        {
 //            server = new Server(new InetSocketAddress(host, port));
