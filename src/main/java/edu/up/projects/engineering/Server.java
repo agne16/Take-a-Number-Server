@@ -43,6 +43,7 @@ public class Server extends WebSocketServer
         allConnections.remove(conn);
         tabConnections.remove(conn);
         System.out.println("closed " + conn.getRemoteSocketAddress() + " with exit code " + code + " additional info: " + reason);
+        System.out.println("Number of tablets: " + tabConnections.size());
     }
 
     @Override
@@ -173,8 +174,9 @@ public class Server extends WebSocketServer
      * @param tabletString - the string from the tablet
      * @param localString  - the string stored on the server
      */
-    public String checkpointMerge(String tabletString, String localString)
+    public String checkpointMerge(String localString, String tabletString)
     {
+        /*
         //Should be checkpointSync#<SessionId>#user,first,last#cp1,cp2...#user,first,last#cp1,cp2... etc
         String[] tabletFields = tabletString.split("#");
         String[] serverFields = localString.split("#");
@@ -212,7 +214,9 @@ public class Server extends WebSocketServer
                 }
             }
         }
-
+        */
+        //Since server is always updating, consider the tablet to be the most updated
+        String mergeResult = tabletString;
         return mergeResult;
     }
 
@@ -435,6 +439,7 @@ public class Server extends WebSocketServer
                 if (parms[1].equals("tablet"))
                 {
                     tabConnections.add(conn);
+                    System.out.println("Number of tablets: " + tabConnections.size());
                 }
                 break;
             case "ireallyreallywanttoclosetheserver":
