@@ -254,7 +254,7 @@ public class Server extends WebSocketServer
     {
         if (!runningStates.keySet().contains(sessionId.toUpperCase()))
         {
-            System.out.println("Error in sessionRetrieve: session does not exist");
+            System.out.println("Error in authenticateStudent: session does not exist");
         }
         LabState labState = runningStates.get(sessionId);
 
@@ -336,17 +336,11 @@ public class Server extends WebSocketServer
         input = input.trim();
         System.out.println("Message received: " + input);
 
-        //do note that ServerClient.java will always expect a reply back
-
-        //acceptable formats for method invoked messages:
-        //checkpointInit#271,B,02,ComputerScienceLaboratory,3#userId,firstName,lastName,0,0,0...#userId,firstName,lastName,0,0,0
-        //checkpointSync#271B02#userId,firstName,lastName,0,0,0...#userId,firstName,lastName,0,0,0
-
         //split the message into so-called "parameters"
         String[] parms = input.split("#");
         switch (parms[0].toLowerCase().trim())//first element of message; processed for interpretation
         {
-            case "checkpointinit":
+            case "checkpointinit": //example: checkpointInit#777,A,01,ComputerScienceLab,5#doejo16,John,Doe,0,0,0,0,0#doeja16,John,Doe,0,0,0,0,0#...
                 //further split parameters into subparameters
                 String[] courseData = parms[1].split(",");
                 String[] classData = Arrays.copyOfRange(parms, 2, parms.length);
@@ -364,7 +358,7 @@ public class Server extends WebSocketServer
 
                 conn.send(encrypt("sessionId#" + newSessionId));//format: sessionId#123A01
                 break;
-            case "checkpointsync":
+            case "checkpointsync": //example: checkpointSync#777A01#doejo16,John,Doe,1,1,1,0,0#doeja16,Jane,Doe,1,1,0,0,0#...
                 System.out.println("INFO: checkpointSync method invoked");
 
                 //call checkpointSync with sessionId and the entire input. successes is reported
@@ -372,10 +366,10 @@ public class Server extends WebSocketServer
                 changes = changes.replaceFirst("checkpoint", "checkpointSync");
                 for(WebSocket connection : tabConnections)
                 {
-                    connection.send(changes);//format: checkpointSync#...
+                    connection.send(changes); //example: checkpointSync#777A01#doejo16,John,Doe,1,1,1,0,0#doeja16,Jane,Doe,1,1,0,0,0#...
                 }
                 break;
-            case "sessionretrieve":
+            case "sessionretrieve": //example: sessionRetrieve#777A01
                 String result = "";
                 if (!runningStates.keySet().contains(parms[1].toUpperCase()))
                 {
@@ -387,7 +381,7 @@ public class Server extends WebSocketServer
                     if (!result.equals(""))
                     {
                         result = result.replaceFirst("checkpoint", "checkpointRetrieve");
-                        conn.send(encrypt(result));
+                        conn.send(encrypt(result)); //example checkpointRetrieve#777A01#doejo16,John,Doe,1,1,1,0,0#doeja16,Jane,Doe,1,1,0,0,0#...
                     }
                     else
                     {
@@ -395,7 +389,7 @@ public class Server extends WebSocketServer
                     }
                 }
                 break;
-            case "authenticate":
+            case "authenticate": //example: authenticate#doejo16#777A01
                 if (authenticateStudent(parms[1], parms[2]))
                 {
                     conn.send(encrypt("User " + parms[1] + " found."));
@@ -405,7 +399,7 @@ public class Server extends WebSocketServer
                     conn.send(encrypt("User " + parms[1] + " not found."));
                 }
                 break;
-            case "enterqueue":
+            case "enterqueue": //example: enterQueue#doejo16#777A01
                 if (enterQueue(parms[1], parms[2]))
                 {
                     conn.send(encrypt("User " + parms[1] + " has been added to the queue."));
@@ -415,7 +409,7 @@ public class Server extends WebSocketServer
                     conn.send(encrypt("User " + parms[1] + " already exists in queue."));
                 }
                 break;
-            case "leavequeue":
+            case "leavequeue": //example: leaveQueue#doejo16#777A01
                 if (leaveQueue(parms[1], parms[2]))
                 {
                     conn.send(encrypt("User " + parms[1] + " has been removed from the queue."));
@@ -425,7 +419,7 @@ public class Server extends WebSocketServer
                     conn.send(encrypt("User " + parms[1] + " was not in the queue."));
                 }
                 break;
-            case "getqueue":
+            case "getqueue": //example: getQueue#777A01
                 String sessionId = parms[1];
                 if (!runningStates.keySet().contains(sessionId.toUpperCase()))
                 {
@@ -435,7 +429,7 @@ public class Server extends WebSocketServer
                 String queue = labState.getLabQueue().toString();
                 conn.send(encrypt(queue));
                 break;
-            case "identify":
+            case "identify": //example: identify#tablet or identify#webpage?
                 if (parms[1].equals("tablet"))
                 {
                     tabConnections.add(conn);
