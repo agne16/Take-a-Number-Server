@@ -315,8 +315,7 @@ public class Server extends WebSocketServer
             return true;
         }
 
-        queue.add(studentId);
-        return true;
+        return false;
     }
 
     /**
@@ -392,31 +391,31 @@ public class Server extends WebSocketServer
             case "authenticate": //example: authenticate#doejo16#777A01
                 if (authenticateStudent(parms[1], parms[2]))
                 {
-                    conn.send(encrypt("User " + parms[1] + " found."));
+                    conn.send("User " + parms[1] + " found.");
                 }
                 else
                 {
-                    conn.send(encrypt("User " + parms[1] + " not found."));
+                    conn.send("User " + parms[1] + " not found.");
                 }
                 break;
             case "enterqueue": //example: enterQueue#doejo16#777A01
                 if (enterQueue(parms[1], parms[2]))
                 {
-                    conn.send(encrypt("User " + parms[1] + " has been added to the queue."));
+                    conn.send("User " + parms[1] + " has been added to the queue.");
                 }
                 else
                 {
-                    conn.send(encrypt("User " + parms[1] + " already exists in queue."));
+                    conn.send("User " + parms[1] + " already exists in queue.");
                 }
                 break;
             case "leavequeue": //example: leaveQueue#doejo16#777A01
                 if (leaveQueue(parms[1], parms[2]))
                 {
-                    conn.send(encrypt("User " + parms[1] + " has been removed from the queue."));
+                    conn.send("User " + parms[1] + " has been removed from the queue.");
                 }
                 else
                 {
-                    conn.send(encrypt("User " + parms[1] + " was not in the queue."));
+                    conn.send("User " + parms[1] + " was not in the queue.");
                 }
                 break;
             case "getqueue": //example: getQueue#777A01
@@ -427,7 +426,7 @@ public class Server extends WebSocketServer
                 }
                 LabState labState = runningStates.get(sessionId);
                 String queue = labState.getLabQueue().toString();
-                conn.send(encrypt(queue));
+                conn.send(queue);
                 break;
             case "identify": //example: identify#tablet or identify#webpage?
                 if (parms[1].equals("tablet"))
@@ -438,12 +437,12 @@ public class Server extends WebSocketServer
                 break;
             case "ireallyreallywanttoclosetheserver":
                 System.out.println("Shutting down the server");
-                conn.send(encrypt("Shutting down the server"));
+                conn.send("Shutting down the server");
                 System.exit(0);
                 break;
             default:
                 //System.out.println("nothing doing");
-                conn.send(encrypt("nothing doing"));
+                conn.send("nothing doing");
                 break;
         }
     }
