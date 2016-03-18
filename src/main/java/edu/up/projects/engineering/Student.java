@@ -9,6 +9,7 @@ public class Student
     private String lastName;
     private String userId;
     private String[] checkpoints;
+    private String position = "unset";
 
     /**
      * Constructor for a Student object
@@ -49,5 +50,15 @@ public class Student
     public void setCheckpoints(String[] checkpoints)
     {
         this.checkpoints = checkpoints;
+    }
+
+    public String getPosition()
+    {
+        return position;
+    }
+
+    public void setPosition(String position)
+    {
+        this.position = position;
     }
 }

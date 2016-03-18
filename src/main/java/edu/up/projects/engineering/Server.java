@@ -48,6 +48,7 @@ public class Server extends WebSocketServer
         tabConnections.remove(conn);
         System.out.println("closed " + conn.getRemoteSocketAddress() + " with exit code " + code + " additional info: " + reason);
         System.out.println("Number of tablets: " + tabConnections.size());
+        System.out.println("Total connections:: " + allConnections.size());
     }
 
     @Override
@@ -250,7 +251,7 @@ public class Server extends WebSocketServer
      * @param sessionId the session id
      * @return true if success, else false
      */
-    public boolean authenticateStudent(String studentId, String sessionId)
+    public boolean authenticateStudent(String sessionId, String studentId)
     {
         if (!runningStates.keySet().contains(sessionId.toUpperCase()))
         {
@@ -275,7 +276,7 @@ public class Server extends WebSocketServer
      * @param sessionId the session id
      * @return true if success, else false
      */
-    public boolean enterQueue(String studentId, String sessionId)
+    public boolean enterQueue(String sessionId, String studentId)
     {
         if (!runningStates.keySet().contains(sessionId.toUpperCase()))
         {
@@ -290,6 +291,8 @@ public class Server extends WebSocketServer
         }
 
         queue.add(studentId);
+        labState.setLabQueue(queue);
+        System.out.println("Current queue: " + queue);
         return true;
     }
 
@@ -300,7 +303,7 @@ public class Server extends WebSocketServer
      * @param sessionId the session id
      * @return true if success, else false
      */
-    public boolean leaveQueue(String studentId, String sessionId)
+    public boolean leaveQueue(String sessionId, String studentId)
     {
         if (!runningStates.keySet().contains(sessionId.toUpperCase()))
         {
@@ -312,6 +315,8 @@ public class Server extends WebSocketServer
         if (queue.contains(studentId))
         {
             queue.remove(studentId);
+            labState.setLabQueue(queue);
+            System.out.println("Current queue: " + queue);
             return true;
         }
 
@@ -388,34 +393,34 @@ public class Server extends WebSocketServer
                     }
                 }
                 break;
-            case "authenticate": //example: authenticate#doejo16#777A01
+            case "authenticate": //example: authenticate#777A01#doejo16
                 if (authenticateStudent(parms[1], parms[2]))
                 {
-                    conn.send("User " + parms[1] + " found.");
+                    conn.send("User " + parms[2] + " found.");
                 }
                 else
                 {
-                    conn.send("User " + parms[1] + " not found.");
+                    conn.send("User " + parms[2] + " not found.");
                 }
                 break;
-            case "enterqueue": //example: enterQueue#doejo16#777A01
-                if (enterQueue(parms[1], parms[2]))
+            case "enterqueue": //example: enterQueue#777A01#doejo16
+                if (authenticateStudent(parms[1], parms[2]) && enterQueue(parms[1], parms[2]))
                 {
-                    conn.send("User " + parms[1] + " has been added to the queue.");
+                    conn.send("User " + parms[2] + " has been added to the queue.");
                 }
                 else
                 {
-                    conn.send("User " + parms[1] + " already exists in queue.");
+                    conn.send("User " + parms[2] + " already exists in queue.");
                 }
                 break;
-            case "leavequeue": //example: leaveQueue#doejo16#777A01
-                if (leaveQueue(parms[1], parms[2]))
+            case "leavequeue": //example: leaveQueue#777A01#doejo16
+                if (authenticateStudent(parms[1], parms[2]) && leaveQueue(parms[1], parms[2]))
                 {
-                    conn.send("User " + parms[1] + " has been removed from the queue.");
+                    conn.send("User " + parms[2] + " has been removed from the queue.");
                 }
                 else
                 {
-                    conn.send("User " + parms[1] + " was not in the queue.");
+                    conn.send("User " + parms[2] + " was not in the queue.");
                 }
                 break;
             case "getqueue": //example: getQueue#777A01
@@ -428,12 +433,66 @@ public class Server extends WebSocketServer
                 String queue = labState.getLabQueue().toString();
                 conn.send(queue);
                 break;
+            case "positioninit": //example: positionInit#777A01#4,4,4,3
+                String[] layoutParams = parms[2].split(",");
+                int leftRow = Integer.parseInt(layoutParams[0]);
+                int leftCol = Integer.parseInt(layoutParams[1]);
+                int rightRow = Integer.parseInt(layoutParams[2]);
+                int rightCol = Integer.parseInt(layoutParams[3]);
+                positionInit(parms[1], leftRow, leftCol, rightRow, rightCol);
+                break;
             case "identify": //example: identify#tablet or identify#webpage?
                 if (parms[1].equals("tablet"))
                 {
                     tabConnections.add(conn);
-                    System.out.println("Number of tablets: " + tabConnections.size());
                 }
+                System.out.println("Number of tablets: " + tabConnections.size());
+                System.out.println("Total connections:: " + allConnections.size());
+                break;
+            case "setposition": //example: setPosition#777A01#agne16#c1r1
+                sessionId = parms[1];
+                String studentId = parms[2];
+                String seat = parms[3];
+                if (!runningStates.keySet().contains(sessionId.toUpperCase()))
+                {
+                    System.out.println("Error in leaveQueue: session does not exist");
+                }
+                labState = runningStates.get(sessionId);
+                Hashtable<String, String> positions = labState.getSeatPositions();
+                if (positions.size() == 0)
+                {
+                    conn.send("Seats have not been initialized yet!");
+                }
+                Hashtable<String, Student> students = labState.getClassData();
+                Student student = students.get(studentId);
+                if (positions.get(seat).equals("unset"))
+                {
+                    student.setPosition(parms[3]);
+                    positions.put(seat,studentId);
+                    conn.send("User " + studentId + " now assigned tn seat " + seat);
+                }
+                else
+                {
+                    conn.send("Seat " + seat + " currently occupied by " + positions.get(seat));
+                }
+                break;
+            case "getpositions": //example: getPositions#777A01 ???
+                LabState currState = runningStates.get(parms[1]);
+                students = currState.getClassData();
+                String message = "positions";
+                for (Student student2 : students.values())
+                {
+                    if (!student2.getPosition().equals("unset"))
+                    {
+                        int studentQueuePos = currState.getLabQueue().indexOf(student2.getUserId()) + 1;
+                        message += "#" + student2.getFirstName() +
+                                "," + student2.getLastName() +
+                                "," + student2.getPosition() +
+                                "," + studentQueuePos;
+
+                    }
+                }
+                conn.send(message);// example: //positions#john#doe#c1r1#jane#doe#c4r3...
                 break;
             case "ireallyreallywanttoclosetheserver":
                 System.out.println("Shutting down the server");
@@ -475,5 +534,55 @@ public class Server extends WebSocketServer
         String plainText = textEncryptor.decrypt(s);
         return plainText;
 
+    }
+
+    public void positionInit(String sessionId, int totalLeftRows, int totalLeftColumns, int totalRightRows, int totalRightColumns)
+    {
+        if (!runningStates.keySet().contains(sessionId.toUpperCase()))
+        {
+            System.out.println("Error in positionInit: session does not exist");
+        }
+        LabState labState = runningStates.get(sessionId);
+        Hashtable<String, String> positions = labState.getSeatPositions();
+        for (int currentRow = 0; currentRow < totalLeftRows; currentRow++)
+        {
+            for (int currentColumn = 0; currentColumn < totalLeftColumns; currentColumn++)
+            {
+                int colId = currentColumn + 1;
+                int rowId = currentRow + 1;
+
+                String id = "c" + currentColumn + "r" + currentRow;
+                if (positions.get(id) == null)
+                {
+                    positions.put(id, "unset");
+                }
+                else
+                {
+                    //not sure if need to overwrite
+                    //positions.put(id, "unset");
+                }
+            }
+        }
+
+        for (int currentRow = 0; currentRow < totalRightRows; currentRow++)
+        {
+            for (int currentColumn = 0; currentColumn < totalRightColumns; currentColumn++)
+            {
+                int colIdOffset = currentColumn + totalLeftColumns;
+                int rowId = currentRow;
+
+                String id = "c" + colIdOffset + "r" + currentRow;
+                if (positions.get(id) == null)
+                {
+                    positions.put(id, "unset");
+                }
+                else
+                {
+                    //not sure if need to overwrite
+                    //positions.put(id, "unset");
+                }
+            }
+        }
+        labState.setSeatPositions(positions);
     }
 }
