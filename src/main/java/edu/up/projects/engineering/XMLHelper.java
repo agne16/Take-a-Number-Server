@@ -52,6 +52,8 @@ public class XMLHelper
             Hashtable<String,Student> everyone = new Hashtable<>();
             ArrayList<String> classList = new ArrayList<>();
 
+            String condensedString = "checkpoint#" + sessionId;
+
             //For each student
             for(int i = 1; i < students.size(); i++)
             {
@@ -66,6 +68,12 @@ public class XMLHelper
                     System.out.println("WARNING: Inconsistent checkpoint list length in parseXML for student " + userId);
                 }
 
+                condensedString += "#" + userId + "," + firstName + "," + lastName;
+                for (String check : checkpoints)
+                {
+                    condensedString += "," + check;
+                }
+
                 classList.add(userId);
 
                 Student student = new Student(userId, firstName, lastName, checkpoints);
@@ -73,6 +81,16 @@ public class XMLHelper
             }
 
             parsedState = new LabState(sessionId, everyone, classList, labQueue, numCheckpoints);
+            String[] courseData = filename.split("-");
+            int courseNumber = Integer.parseInt(courseData[0].substring(2));
+            String courseSection = courseData[1];
+            String courseName = courseData[2];
+
+            parsedState.setCondensedLabString(condensedString);
+            parsedState.setCourseId(courseNumber);
+            parsedState.setCourseSection(courseSection);
+            parsedState.setCourseName(courseName);
+
         }
         catch (JDOMException | IOException e)
         {

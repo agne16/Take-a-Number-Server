@@ -253,7 +253,7 @@ public class Server extends WebSocketServer
      */
     public boolean authenticateStudent(String sessionId, String studentId)
     {
-        if (!runningStates.keySet().contains(sessionId.toUpperCase()))
+        if (!runningStates.keySet().contains(sessionId))
         {
             System.out.println("Error in authenticateStudent: session does not exist");
         }
@@ -375,22 +375,43 @@ public class Server extends WebSocketServer
                 break;
             case "sessionretrieve": //example: sessionRetrieve#777A01
                 String result = "";
+                String sessionIdRetrieve = parms[1];
                 if (!runningStates.keySet().contains(parms[1].toUpperCase()))
                 {
-                    System.out.println("Error in sessionRetrieve: session does not exist");
+                    //check if a saved xml file exists to load from
+                    File[] files = new File(labsFilePath).listFiles();
+                    String filename = "";
+
+                    for (File file : files)
+                    {
+                        if (file.isFile())
+                        {
+                            String currFilename = file.getName();
+                            if (currFilename.contains(sessionIdRetrieve))
+                            {
+                                filename = currFilename;
+                            }
+                        }
+                    }
+
+                    LabState ls = helper.parseXML(labsFilePath, filename);
+                    if (ls == null)
+                    {
+                        System.out.println("Error in sessionRetrieve: session does not exist");
+                        break; //TODO valid to do?
+                    }
+                    runningStates.put(sessionIdRetrieve, ls);
+                }
+
+                result = runningStates.get(parms[1]).getCondensedLabString();
+                if (!result.equals(""))
+                {
+                    result = result.replaceFirst("checkpoint", "checkpointRetrieve");
+                    conn.send(encrypt(result)); //example checkpointRetrieve#777A01#doejo16,John,Doe,1,1,1,0,0#doeja16,Jane,Doe,1,1,0,0,0#...
                 }
                 else
                 {
-                    result = runningStates.get(parms[1]).getCondensedLabString();
-                    if (!result.equals(""))
-                    {
-                        result = result.replaceFirst("checkpoint", "checkpointRetrieve");
-                        conn.send(encrypt(result)); //example checkpointRetrieve#777A01#doejo16,John,Doe,1,1,1,0,0#doeja16,Jane,Doe,1,1,0,0,0#...
-                    }
-                    else
-                    {
-                        System.out.println("Empty file in sessionRetrieve");
-                    }
+                    System.out.println("Empty file in sessionRetrieve");
                 }
                 break;
             case "authenticate": //example: authenticate#777A01#doejo16
@@ -469,7 +490,7 @@ public class Server extends WebSocketServer
                 {
                     student.setPosition(parms[3]);
                     positions.put(seat,studentId);
-                    conn.send("User " + studentId + " now assigned tn seat " + seat);
+                    conn.send("User " + studentId + " now assigned to seat " + seat);
                 }
                 else
                 {
