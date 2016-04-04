@@ -61,8 +61,8 @@ public class XMLHelper
 
                 //add the student id to the class roster
                 String userId =  students.get(i).getAttribute("userId").getValue();
-                String firstName = currStudentData.get(0).getValue().toLowerCase();
-                String lastName = currStudentData.get(1).getValue().toLowerCase();
+                String firstName = currStudentData.get(0).getValue();
+                String lastName = currStudentData.get(1).getValue();
                 String[] checkpoints = currStudentData.get(2).getValue().split(",");
                 if (checkpoints.length != numCheckpoints) {
                     System.out.println("WARNING: Inconsistent checkpoint list length in parseXML for student " + userId);

@@ -398,7 +398,7 @@ public class Server extends WebSocketServer
                     if (ls == null)
                     {
                         System.out.println("Error in sessionRetrieve: session does not exist");
-                        break; //TODO valid to do?
+                        return;
                     }
                     runningStates.put(sessionIdRetrieve, ls);
                 }
@@ -525,6 +525,7 @@ public class Server extends WebSocketServer
                 conn.send("nothing doing");
                 break;
         }
+        return;
     }
 
     /**
