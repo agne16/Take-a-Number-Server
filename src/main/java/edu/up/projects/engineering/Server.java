@@ -54,7 +54,8 @@ public class Server extends WebSocketServer
     @Override
     public void onMessage(WebSocket conn, String message)
     {
-        System.out.println("received message from " + conn.getRemoteSocketAddress() + ": " + message);
+        //System.out.println("received message from " + conn.getRemoteSocketAddress() + ": " + message);
+        System.out.println("Message Received");
         String header = message.split("#")[0].toLowerCase();
         if(header.equals("encrypted"))
         {
@@ -143,7 +144,7 @@ public class Server extends WebSocketServer
             //checkpointsTemp = content;
             runningStates.get(sessionId).setCondensedLabString(content);
 
-            System.out.println("INFO-new checkpoint variable: " + content);
+            ////System.out.println("INFO-new checkpoint variable: " + content);
             return true;
         }
         return false;
@@ -292,7 +293,7 @@ public class Server extends WebSocketServer
 
         queue.add(studentId);
         labState.setLabQueue(queue);
-        System.out.println("Current queue: " + queue);
+        ////System.out.println("Current queue: " + queue);
         return true;
     }
 
@@ -316,7 +317,7 @@ public class Server extends WebSocketServer
         {
             queue.remove(studentId);
             labState.setLabQueue(queue);
-            System.out.println("Current queue: " + queue);
+            ////System.out.println("Current queue: " + queue);
             return true;
         }
 
@@ -338,7 +339,7 @@ public class Server extends WebSocketServer
         }
 
         input = input.trim();
-        System.out.println("Message received: " + input);
+        ////System.out.println("Message received: " + input);
 
         //split the message into so-called "parameters"
         String[] parms = input.split("#");
@@ -578,11 +579,11 @@ public class Server extends WebSocketServer
                 {
                     positions.put(id, "unset");
                 }
-                else
-                {
-                    //not sure if need to overwrite
-                    //positions.put(id, "unset");
-                }
+//                else
+//                {
+//                    //not sure if need to overwrite
+//                    //positions.put(id, "unset");
+//                }
             }
         }
 
@@ -598,11 +599,11 @@ public class Server extends WebSocketServer
                 {
                     positions.put(id, "unset");
                 }
-                else
-                {
-                    //not sure if need to overwrite
-                    //positions.put(id, "unset");
-                }
+//                else
+//                {
+//                    //not sure if need to overwrite
+//                    //positions.put(id, "unset");
+//                }
             }
         }
         labState.setSeatPositions(positions);
