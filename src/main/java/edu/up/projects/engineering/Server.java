@@ -333,6 +333,13 @@ public class Server extends WebSocketServer
             labState.setLabQueue(queue);
             debugPrint("Current queue: " + queue);
 
+            for (String student : queue)
+            {
+                WebSocket ws = webConnections.get(student);
+                int queuePos = queue.indexOf(student) + 1;
+                ws.send("Your position in the queue is: " + queuePos);
+            }
+
             return true;
         }
 
@@ -679,14 +686,15 @@ public class Server extends WebSocketServer
 
     public void removeTraces(LabState ls, String student)
     {
-        ls.getLabQueue().remove(student);
+        leaveQueue(ls.getSessionId(), student);
         Student st = ls.getClassData().get(student);
         String seat = st.getPosition();
         ls.getSeatPositions().put(seat, "unset");
         st.setPosition("unset");
     }
 
-    public String generateQueueString(String sessionId) {
+    public String generateQueueString(String sessionId)
+    {
         LabState currState = runningStates.get(sessionId);
         Hashtable<String, Student> students = currState.getClassData();
         String message = "positions";
