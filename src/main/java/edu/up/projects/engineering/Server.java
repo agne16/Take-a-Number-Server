@@ -452,7 +452,9 @@ public class Server extends WebSocketServer
                     conn.send("User " + parms[2] + " has been added to the queue.");
                     for(WebSocket connection : tabConnections)
                     {
-                        connection.send(generateQueueString(parms[1])); //example: positions#777A01#...
+                        String message = generateQueueString(parms[1]);
+                        message = message.replaceFirst("positions", "positionSync");
+                        connection.send(message); //example: positionsSync#777A01#...
                     }
                 }
                 else
@@ -467,7 +469,9 @@ public class Server extends WebSocketServer
                     conn.send("User " + parms[2] + " has been removed from the queue.");
                     for(WebSocket connection : tabConnections)
                     {
-                        connection.send(generateQueueString(parms[1])); //example: positions#777A01#...
+                        String message = generateQueueString(parms[1]);
+                        message = message.replaceFirst("positions", "positionSync");
+                        connection.send(message); //example: positionsSync#777A01#...
                     }
                 }
                 else
@@ -537,7 +541,9 @@ public class Server extends WebSocketServer
                     conn.send("User " + studentId + " now assigned to seat " + seat);
                     for(WebSocket connection : tabConnections)
                     {
-                        connection.send(generateQueueString(parms[1])); //example: positions#777A01#...
+                        String message = generateQueueString(parms[1]);
+                        message = message.replaceFirst("positions", "positionSync");
+                        connection.send(message); //example: positionsSync#777A01#...
                     }
                 }
                 else
