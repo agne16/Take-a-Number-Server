@@ -21,10 +21,10 @@ public class Server extends WebSocketServer
     private String labsFilePath = rootPath + "/LabSessions";
 
     XMLHelper helper = new XMLHelper();
-    private Hashtable<String, LabState> runningStates = new Hashtable<String,LabState>();
+    private Hashtable<String, LabState> runningStates = new Hashtable<>();
 
-    ArrayList<WebSocket> allConnections = new ArrayList<WebSocket>();
-    ArrayList<WebSocket> tabConnections = new ArrayList<WebSocket>();
+    ArrayList<WebSocket> allConnections = new ArrayList<>();
+    ArrayList<WebSocket> tabConnections = new ArrayList<>();
 
     public Server(InetSocketAddress address)
     {
@@ -101,8 +101,8 @@ public class Server extends WebSocketServer
         String sessionId = courseId + courseSection + labNumber;
 
         //interpret each student's data. add them to the hashtable and roster.
-        Hashtable<String, Student> classData = new Hashtable();
-        ArrayList<String> classRoster = new ArrayList<String>();
+        Hashtable<String, Student> classData = new Hashtable<>();
+        ArrayList<String> classRoster = new ArrayList<>();
         for (String s : parms)
         {
             String[] studentData = s.split(",");
@@ -191,8 +191,7 @@ public class Server extends WebSocketServer
     public String checkpointMerge(String localString, String tabletString)
     {
         //Since server is always updating, consider the tablet to be the most updated
-        String mergeResult = tabletString;
-        return mergeResult;
+        return tabletString;
     }
 
 
@@ -204,26 +203,22 @@ public class Server extends WebSocketServer
     public boolean validatePath(String s)
     {
         File directory = new File(s);
-        if (directory.isDirectory())
-        {
-            return true;
-        }
-        return directory.mkdirs();
+        return directory.isDirectory() || directory.mkdirs();
     }
 
     /**
      * Creates a lab state from a network packet string assuming the following format
      * checkpointSync#271B02#userId,firstName,lastName,0,0,0...#userId,firstName,lastName,0,0,0
-     * @param packet
-     * @return
+     * @param packet the condensed string to parse to a lab state
+     * @return a lab state
      */
     public LabState checkSyncToLabState(String packet)
     {
         String parms[] = packet.split("#");
         String sessionId = parms[1];
         String[] classStrings = Arrays.copyOfRange(parms, 2, parms.length);
-        Hashtable<String, Student> classData = new Hashtable<String, Student>();
-        ArrayList<String> classRoster = new ArrayList<String>();
+        Hashtable<String, Student> classData = new Hashtable<>();
+        ArrayList<String> classRoster = new ArrayList<>();
         for (String s : classStrings)
         {
             String[] studentData = s.split(",");
@@ -241,7 +236,7 @@ public class Server extends WebSocketServer
         //guy on the class roster grabbed from the hashtable. Messy one-liner. I know.
         int numCheckpoints = classData.get(classRoster.get(0)).getCheckpoints().length;
 
-        ArrayList<String> labQueue = new ArrayList<String>();
+        ArrayList<String> labQueue = new ArrayList<>();
         return new LabState(sessionId,classData,classRoster,labQueue,numCheckpoints);
     }
 
@@ -333,10 +328,10 @@ public class Server extends WebSocketServer
     public void interpretMessage(WebSocket conn, String s)
     {
         String input = s;
-        if (input.equals("") || input.equals("."))
-        {
-            //close the connection
-        }
+//        if (input.equals("") || input.equals("."))
+//        {
+//            //close the connection
+//        }
 
         input = input.trim();
         ////System.out.println("Message received: " + input);
@@ -375,7 +370,7 @@ public class Server extends WebSocketServer
                 }
                 break;
             case "sessionretrieve": //example: sessionRetrieve#777A01
-                String result = "";
+                String result;
                 String sessionIdRetrieve = parms[1];
                 if (!runningStates.keySet().contains(parms[1].toUpperCase()))
                 {
@@ -383,6 +378,7 @@ public class Server extends WebSocketServer
                     File[] files = new File(labsFilePath).listFiles();
                     String filename = "";
 
+                    assert files != null;
                     for (File file : files)
                     {
                         if (file.isFile())
@@ -526,7 +522,6 @@ public class Server extends WebSocketServer
                 conn.send("nothing doing");
                 break;
         }
-        return;
     }
 
     /**
@@ -540,8 +535,7 @@ public class Server extends WebSocketServer
         BasicTextEncryptor textEncryptor = new BasicTextEncryptor();
         textEncryptor.setPassword("ForTheLulz");
         String myEncryptedText = textEncryptor.encrypt(s);
-        String payload = "encrypted#" + myEncryptedText;
-        return payload;
+        return "encrypted#" + myEncryptedText;
     }
 
     /**
@@ -554,8 +548,7 @@ public class Server extends WebSocketServer
     {
         BasicTextEncryptor textEncryptor = new BasicTextEncryptor();
         textEncryptor.setPassword("ForTheLulz");
-        String plainText = textEncryptor.decrypt(s);
-        return plainText;
+        return textEncryptor.decrypt(s);
 
     }
 
