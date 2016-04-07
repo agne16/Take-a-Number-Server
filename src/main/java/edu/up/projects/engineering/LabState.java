@@ -15,7 +15,7 @@ public class LabState
     private Hashtable<String, Student> classData;
     private int numCheckpoints;
 
-    private int[] labLayout = new int[4];
+    private int[] labLayout = new int[]{-1, -1, -1, -1,};
 
     private int courseId;
     private String courseSection;

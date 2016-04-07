@@ -176,6 +176,7 @@ public class Server extends WebSocketServer
         int courseId = oldLs.getCourseId();
         String courseSection = oldLs.getCourseSection();
         String courseName = oldLs.getCourseName();
+        ls.setLabLayout(oldLs.getLabLayout());
 
         helper.writeFile(ls, labsFilePath, courseId, courseSection, courseName);
 
@@ -617,6 +618,10 @@ public class Server extends WebSocketServer
             }
         }
         labState.setSeatPositions(positions);
+        int courseId = labState.getCourseId();
+        String courseSection = labState.getCourseSection();
+        String courseName = labState.getCourseName();
+        helper.writeFile(labState, labsFilePath, courseId, courseSection, courseName);
     }
 
     public void debugPrint(String s)
