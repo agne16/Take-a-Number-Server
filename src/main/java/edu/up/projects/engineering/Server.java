@@ -316,6 +316,7 @@ public class Server extends WebSocketServer
             queue.remove(studentId);
             labState.setLabQueue(queue);
             verbosePrint("Current queue: " + queue);
+
             return true;
         }
 
@@ -438,10 +439,12 @@ public class Server extends WebSocketServer
                 if (authenticateStudent(parms[1], parms[2]) && leaveQueue(parms[1], parms[2]))
                 {
                     conn.send("User " + parms[2] + " has been removed from the queue.");
+                    System.out.print("sent1");
                 }
                 else
                 {
                     conn.send("User " + parms[2] + " was not in the queue.");
+                    System.out.print("sent2");
                 }
                 break;
             case "getqueue": //example: getQueue#777A01
@@ -476,7 +479,7 @@ public class Server extends WebSocketServer
                 String seat = parms[3];
                 if (!runningStates.keySet().contains(sessionId.toUpperCase()))
                 {
-                    debugPrint("Error in leaveQueue: session does not exist");
+                    debugPrint("Error in setPosition: session does not exist");
                 }
                 labState = runningStates.get(sessionId);
                 Hashtable<String, String> positions = labState.getSeatPositions();
@@ -514,7 +517,7 @@ public class Server extends WebSocketServer
 
                     }
                 }
-                conn.send(message);// example: //positions#john#doe#c1r1#jane#doe#c4r3...
+                conn.send(message);// example: //positions#doejo16,john,doe,c1r1#doeja16,jane,doe,c4r3...
                 break;
             case "ireallyreallywanttoclosetheserver":
                 debugPrint("Shutting down the server");
