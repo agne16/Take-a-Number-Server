@@ -26,6 +26,9 @@ public class Server extends WebSocketServer
     ArrayList<WebSocket> allConnections = new ArrayList<>();
     ArrayList<WebSocket> tabConnections = new ArrayList<>();
 
+    boolean debug = true;
+    boolean verbose = true;
+
     public Server(InetSocketAddress address)
     {
         super(address);
@@ -38,7 +41,7 @@ public class Server extends WebSocketServer
     public void onOpen(WebSocket conn, ClientHandshake handshake)
     {
         allConnections.add(conn);
-        System.out.println("new connection to " + conn.getRemoteSocketAddress());
+        debugPrint("new connection to " + conn.getRemoteSocketAddress());
     }
 
     @Override
@@ -46,16 +49,16 @@ public class Server extends WebSocketServer
     {
         allConnections.remove(conn);
         tabConnections.remove(conn);
-        System.out.println("closed " + conn.getRemoteSocketAddress() + " with exit code " + code + " additional info: " + reason);
-        System.out.println("Number of tablets: " + tabConnections.size());
-        System.out.println("Total connections:: " + allConnections.size());
+        debugPrint("closed " + conn.getRemoteSocketAddress() + " with exit code " + code + " additional info: " + reason);
+        debugPrint("Number of tablets: " + tabConnections.size());
+        debugPrint("Total connections:: " + allConnections.size());
     }
 
     @Override
     public void onMessage(WebSocket conn, String message)
     {
-        //System.out.println("received message from " + conn.getRemoteSocketAddress() + ": " + message);
-        System.out.println("Message Received");
+        verbosePrint("received message from " + conn.getRemoteSocketAddress() + ": " + message);
+        debugPrint("Message Received");
         String header = message.split("#")[0].toLowerCase();
         if(header.equals("encrypted"))
         {
@@ -144,7 +147,7 @@ public class Server extends WebSocketServer
             //checkpointsTemp = content;
             runningStates.get(sessionId).setCondensedLabString(content);
 
-            ////System.out.println("INFO-new checkpoint variable: " + content);
+            verbosePrint("INFO-new checkpoint variable: " + content);
             return true;
         }
         return false;
@@ -251,7 +254,7 @@ public class Server extends WebSocketServer
     {
         if (!runningStates.keySet().contains(sessionId))
         {
-            System.out.println("Error in authenticateStudent: session does not exist");
+            debugPrint("Error in authenticateStudent: session does not exist");
         }
         LabState labState = runningStates.get(sessionId);
 
@@ -276,7 +279,7 @@ public class Server extends WebSocketServer
     {
         if (!runningStates.keySet().contains(sessionId.toUpperCase()))
         {
-            System.out.println("Error in enterQueue: session does not exist");
+            debugPrint("Error in enterQueue: session does not exist");
         }
         LabState labState = runningStates.get(sessionId);
         ArrayList<String> queue = labState.getLabQueue();
@@ -288,7 +291,7 @@ public class Server extends WebSocketServer
 
         queue.add(studentId);
         labState.setLabQueue(queue);
-        ////System.out.println("Current queue: " + queue);
+        verbosePrint("Current queue: " + queue);
         return true;
     }
 
@@ -303,7 +306,7 @@ public class Server extends WebSocketServer
     {
         if (!runningStates.keySet().contains(sessionId.toUpperCase()))
         {
-            System.out.println("Error in leaveQueue: session does not exist");
+            debugPrint("Error in leaveQueue: session does not exist");
         }
         LabState labState = runningStates.get(sessionId);
         ArrayList<String> queue = labState.getLabQueue();
@@ -312,7 +315,7 @@ public class Server extends WebSocketServer
         {
             queue.remove(studentId);
             labState.setLabQueue(queue);
-            ////System.out.println("Current queue: " + queue);
+            verbosePrint("Current queue: " + queue);
             return true;
         }
 
@@ -334,7 +337,7 @@ public class Server extends WebSocketServer
 //        }
 
         input = input.trim();
-        ////System.out.println("Message received: " + input);
+        verbosePrint("Message received: " + input);
 
         //split the message into so-called "parameters"
         String[] parms = input.split("#");
@@ -353,13 +356,13 @@ public class Server extends WebSocketServer
                 int numCheckpoints = Integer.parseInt(courseData[4]);
 
                 //create lab sessions, files
-                System.out.println("INFO: Invoking 'checkpointInit' command");
+                debugPrint("INFO: Invoking 'checkpointInit' command");
                 String newSessionId = checkpointInit(classData, courseNumber, courseSection, labNumber, numCheckpoints, courseName);
 
                 conn.send(encrypt("sessionId#" + newSessionId));//format: sessionId#123A01
                 break;
             case "checkpointsync": //example: checkpointSync#777A01#doejo16,John,Doe,1,1,1,0,0#doeja16,Jane,Doe,1,1,0,0,0#...
-                System.out.println("INFO: checkpointSync method invoked");
+                debugPrint("INFO: checkpointSync method invoked");
 
                 //call checkpointSync with sessionId and the entire input. successes is reported
                 String changes = checkpointSync(parms[1], input);
@@ -394,7 +397,7 @@ public class Server extends WebSocketServer
                     LabState ls = helper.parseXML(labsFilePath, filename);
                     if (ls == null)
                     {
-                        System.out.println("Error in sessionRetrieve: session does not exist");
+                        debugPrint("Error in sessionRetrieve: session does not exist");
                         return;
                     }
                     runningStates.put(sessionIdRetrieve, ls);
@@ -408,7 +411,7 @@ public class Server extends WebSocketServer
                 }
                 else
                 {
-                    System.out.println("Empty file in sessionRetrieve");
+                    debugPrint("Empty file in sessionRetrieve");
                 }
                 break;
             case "authenticate": //example: authenticate#777A01#doejo16
@@ -445,7 +448,7 @@ public class Server extends WebSocketServer
                 String sessionId = parms[1];
                 if (!runningStates.keySet().contains(sessionId.toUpperCase()))
                 {
-                    System.out.println("Error in leaveQueue: session does not exist");
+                    debugPrint("Error in leaveQueue: session does not exist");
                 }
                 LabState labState = runningStates.get(sessionId);
                 String queue = labState.getLabQueue().toString();
@@ -464,8 +467,8 @@ public class Server extends WebSocketServer
                 {
                     tabConnections.add(conn);
                 }
-                System.out.println("Number of tablets: " + tabConnections.size());
-                System.out.println("Total connections:: " + allConnections.size());
+                debugPrint("Number of tablets: " + tabConnections.size());
+                debugPrint("Total connections:: " + allConnections.size());
                 break;
             case "setposition": //example: setPosition#777A01#agne16#c1r1
                 sessionId = parms[1];
@@ -473,7 +476,7 @@ public class Server extends WebSocketServer
                 String seat = parms[3];
                 if (!runningStates.keySet().contains(sessionId.toUpperCase()))
                 {
-                    System.out.println("Error in leaveQueue: session does not exist");
+                    debugPrint("Error in leaveQueue: session does not exist");
                 }
                 labState = runningStates.get(sessionId);
                 Hashtable<String, String> positions = labState.getSeatPositions();
@@ -513,12 +516,12 @@ public class Server extends WebSocketServer
                 conn.send(message);// example: //positions#john#doe#c1r1#jane#doe#c4r3...
                 break;
             case "ireallyreallywanttoclosetheserver":
-                System.out.println("Shutting down the server");
+                debugPrint("Shutting down the server");
                 conn.send("Shutting down the server");
                 System.exit(0);
                 break;
             default:
-                //System.out.println("nothing doing");
+                //debugPrint("nothing doing");
                 conn.send("nothing doing");
                 break;
         }
@@ -556,7 +559,7 @@ public class Server extends WebSocketServer
     {
         if (!runningStates.keySet().contains(sessionId.toUpperCase()))
         {
-            System.out.println("Error in positionInit: session does not exist");
+            debugPrint("Error in positionInit: session does not exist");
         }
         LabState labState = runningStates.get(sessionId);
         Hashtable<String, String> positions = labState.getSeatPositions();
@@ -600,5 +603,21 @@ public class Server extends WebSocketServer
             }
         }
         labState.setSeatPositions(positions);
+    }
+
+    public void debugPrint(String s)
+    {
+        if (debug)
+        {
+            System.out.println(s);
+        }
+    }
+
+    public void verbosePrint(String s)
+    {
+        if (verbose)
+        {
+            System.out.println(s);
+        }
     }
 }
