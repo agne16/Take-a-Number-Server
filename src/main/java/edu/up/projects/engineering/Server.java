@@ -506,7 +506,8 @@ public class Server extends WebSocketServer
                     if (!student2.getPosition().equals("unset"))
                     {
                         int studentQueuePos = currState.getLabQueue().indexOf(student2.getUserId()) + 1;
-                        message += "#" + student2.getFirstName() +
+                        message += "#" + student2.getUserId() +
+                                "," + student2.getFirstName() +
                                 "," + student2.getLastName() +
                                 "," + student2.getPosition() +
                                 "," + studentQueuePos;
