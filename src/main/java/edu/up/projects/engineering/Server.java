@@ -419,6 +419,8 @@ public class Server extends WebSocketServer
                         return;
                     }
                     runningStates.put(sessionIdRetrieve, ls);
+                    int[] layoutRetrieve = ls.getLabLayout();
+                    positionInit(sessionIdRetrieve, layoutRetrieve[0], layoutRetrieve[1], layoutRetrieve[2], layoutRetrieve[3]);
                 }
 
                 result = runningStates.get(parms[1]).getCondensedLabString();
