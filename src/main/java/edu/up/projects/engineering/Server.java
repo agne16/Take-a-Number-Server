@@ -621,7 +621,7 @@ public class Server extends WebSocketServer
             debugPrint("Error in positionInit: session does not exist");
         }
         LabState labState = runningStates.get(sessionId);
-        labState.setLabLayout(new int[]{totalLeftColumns, totalLeftRows, totalRightColumns, totalRightColumns});
+        labState.setLabLayout(new int[]{totalLeftRows, totalLeftColumns, totalRightRows, totalRightColumns});
         Hashtable<String, String> positions = labState.getSeatPositions();
         for (int currentRow = 0; currentRow < totalLeftRows; currentRow++)
         {
@@ -635,11 +635,6 @@ public class Server extends WebSocketServer
                 {
                     positions.put(id, "unset");
                 }
-//                else
-//                {
-//                    //not sure if need to overwrite
-//                    //positions.put(id, "unset");
-//                }
             }
         }
 
@@ -654,11 +649,6 @@ public class Server extends WebSocketServer
                 {
                     positions.put(id, "unset");
                 }
-//                else
-//                {
-//                    //not sure if need to overwrite
-//                    //positions.put(id, "unset");
-//                }
             }
         }
         labState.setSeatPositions(positions);
