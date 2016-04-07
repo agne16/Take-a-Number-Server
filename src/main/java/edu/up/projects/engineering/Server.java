@@ -452,7 +452,7 @@ public class Server extends WebSocketServer
                     conn.send("User " + parms[2] + " has been added to the queue.");
                     for(WebSocket connection : tabConnections)
                     {
-                        connection.send("updateQueue#" + parms[1]); //example: updateQueue#777A01
+                        connection.send(generateQueueString(parms[1])); //example: positions#777A01#...
                     }
                 }
                 else
@@ -465,6 +465,10 @@ public class Server extends WebSocketServer
                 if (authenticateStudent(parms[1], parms[2]) && leaveQueue(parms[1], parms[2]))
                 {
                     conn.send("User " + parms[2] + " has been removed from the queue.");
+                    for(WebSocket connection : tabConnections)
+                    {
+                        connection.send(generateQueueString(parms[1])); //example: positions#777A01#...
+                    }
                 }
                 else
                 {
@@ -531,6 +535,10 @@ public class Server extends WebSocketServer
                     student.setPosition(parms[3]);
                     positions.put(seat,studentId);
                     conn.send("User " + studentId + " now assigned to seat " + seat);
+                    for(WebSocket connection : tabConnections)
+                    {
+                        connection.send(generateQueueString(parms[1])); //example: positions#777A01#...
+                    }
                 }
                 else
                 {
@@ -539,22 +547,7 @@ public class Server extends WebSocketServer
                 break;
             case "getpositions": //example: getPositions#777A01 ???
                 debugPrint("INFO: getPositions method invoked");
-                LabState currState = runningStates.get(parms[1]);
-                students = currState.getClassData();
-                String message = "positions";
-                for (Student student2 : students.values())
-                {
-                    if (!student2.getPosition().equals("unset"))
-                    {
-                        int studentQueuePos = currState.getLabQueue().indexOf(student2.getUserId()) + 1;
-                        message += "#" + student2.getUserId() +
-                                "," + student2.getFirstName() +
-                                "," + student2.getLastName() +
-                                "," + student2.getPosition() +
-                                "," + studentQueuePos;
-
-                    }
-                }
+                String message = generateQueueString(parms[1]);
                 conn.send(message);// example: //positions#doejo16,john,doe,c1r1#doeja16,jane,doe,c4r3...
                 break;
             case "getlayout": // example: //getLayout#777A01
@@ -685,5 +678,24 @@ public class Server extends WebSocketServer
         String seat = st.getPosition();
         ls.getSeatPositions().put(seat, "unset");
         st.setPosition("unset");
+    }
+
+    public String generateQueueString(String sessionId) {
+        LabState currState = runningStates.get(sessionId);
+        Hashtable<String, Student> students = currState.getClassData();
+        String message = "positions";
+        for (Student student2 : students.values())
+        {
+            if (!student2.getPosition().equals("unset"))
+            {
+                int studentQueuePos = currState.getLabQueue().indexOf(student2.getUserId()) + 1;
+                message += "#" + student2.getUserId() +
+                        "," + student2.getFirstName() +
+                        "," + student2.getLastName() +
+                        "," + student2.getPosition() +
+                        "," + studentQueuePos;
+            }
+        }
+        return message;
     }
 }
