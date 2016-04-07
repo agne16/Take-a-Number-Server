@@ -45,6 +45,13 @@ public class XMLHelper
             //Get the array of students
             List<Element> students = labState.getChildren();
             int numCheckpoints = Integer.parseInt(students.get(0).getValue()); //child(0) is reserved for numCheckpoints
+            String layout = students.get(1).getValue(); //child(1) is reserved for lab layout
+            String[] stringArray = layout.split(",");
+            int[] layoutArray = new int[4];
+            for (int i = 0; i < stringArray.length; i++)
+            {
+                layoutArray[i] = Integer.parseInt(stringArray[i]);
+            }
 
             //initialize values to be passed onto LabState constructor
             String sessionId = labState.getAttribute("sessionId").getValue();
@@ -55,7 +62,7 @@ public class XMLHelper
             String condensedString = "checkpoint#" + sessionId;
 
             //For each student
-            for(int i = 1; i < students.size(); i++)
+            for(int i = 2; i < students.size(); i++)
             {
                 List<Element> currStudentData = students.get(i).getChildren();
 
@@ -90,6 +97,7 @@ public class XMLHelper
             parsedState.setCourseId(courseNumber);
             parsedState.setCourseSection(courseSection);
             parsedState.setCourseName(courseName);
+            parsedState.setLabLayout(layoutArray);
 
         }
         catch (JDOMException | IOException e)
@@ -128,7 +136,12 @@ public class XMLHelper
             print_line.print("<?xml version=\"1.0\"?>\n");
             print_line.print("<lab sessionId=\"" + labState.getSessionId() + "\">\n");
             print_line.print("\t<numCheckpoints>" + labState.getNumCheckpoints() + "</numCheckpoints>\n");
-            for (String s : labState.getClassRoster()) {
+
+            int[] layout = labState.getLabLayout();
+            String layoutString = layout[0] + "," + layout[1] + "," + layout[2] + "," + layout[3];
+            print_line.print("\t<layout>" + layoutString + "</layout>\n");
+            for (String s : labState.getClassRoster())
+            {
                 Student student = labState.getClassData().get(s);
                 String[] checkpoints = student.getCheckpoints();
                 print_line.print("\t<student userId=\"" + student.getUserId() + "\">\n");
