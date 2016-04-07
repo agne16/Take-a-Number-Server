@@ -27,7 +27,7 @@ public class Server extends WebSocketServer
     ArrayList<WebSocket> tabConnections = new ArrayList<>();
 
     boolean debug = true;
-    boolean verbose = true;
+    boolean verbose = false;
 
     public Server(InetSocketAddress address)
     {
@@ -58,7 +58,6 @@ public class Server extends WebSocketServer
     public void onMessage(WebSocket conn, String message)
     {
         verbosePrint("received message from " + conn.getRemoteSocketAddress() + ": " + message);
-        debugPrint("Message Received");
         String header = message.split("#")[0].toLowerCase();
         if(header.equals("encrypted"))
         {
@@ -292,7 +291,7 @@ public class Server extends WebSocketServer
 
         queue.add(studentId);
         labState.setLabQueue(queue);
-        verbosePrint("Current queue: " + queue);
+        debugPrint("Current queue: " + queue);
         return true;
     }
 
@@ -316,7 +315,7 @@ public class Server extends WebSocketServer
         {
             queue.remove(studentId);
             labState.setLabQueue(queue);
-            verbosePrint("Current queue: " + queue);
+            debugPrint("Current queue: " + queue);
 
             return true;
         }
@@ -375,6 +374,7 @@ public class Server extends WebSocketServer
                 }
                 break;
             case "sessionretrieve": //example: sessionRetrieve#777A01
+                debugPrint("INFO: sessionRetrieve method invoked");
                 String result;
                 String sessionIdRetrieve = parms[1];
                 if (!runningStates.keySet().contains(parms[1].toUpperCase()))
@@ -417,6 +417,7 @@ public class Server extends WebSocketServer
                 }
                 break;
             case "authenticate": //example: authenticate#777A01#doejo16
+                debugPrint("INFO: authenticate method invoked");
                 if (authenticateStudent(parms[1], parms[2]))
                 {
                     conn.send("User " + parms[2] + " found.");
@@ -427,6 +428,7 @@ public class Server extends WebSocketServer
                 }
                 break;
             case "enterqueue": //example: enterQueue#777A01#doejo16
+                debugPrint("INFO: enterQueue method invoked");
                 if (authenticateStudent(parms[1], parms[2]) && enterQueue(parms[1], parms[2]))
                 {
                     conn.send("User " + parms[2] + " has been added to the queue.");
@@ -437,6 +439,7 @@ public class Server extends WebSocketServer
                 }
                 break;
             case "leavequeue": //example: leaveQueue#777A01#doejo16
+                debugPrint("INFO: leaveQueue method invoked");
                 if (authenticateStudent(parms[1], parms[2]) && leaveQueue(parms[1], parms[2]))
                 {
                     conn.send("User " + parms[2] + " has been removed from the queue.");
@@ -449,6 +452,7 @@ public class Server extends WebSocketServer
                 }
                 break;
             case "getqueue": //example: getQueue#777A01
+                debugPrint("INFO: getQueue method invoked");
                 String sessionId = parms[1];
                 if (!runningStates.keySet().contains(sessionId.toUpperCase()))
                 {
@@ -459,6 +463,7 @@ public class Server extends WebSocketServer
                 conn.send(queue);
                 break;
             case "positioninit": //example: positionInit#777A01#4,4,4,3
+                debugPrint("INFO: positionInit method invoked");
                 String[] layoutParams = parms[2].split(",");
                 int leftRow = Integer.parseInt(layoutParams[0]);
                 int leftCol = Integer.parseInt(layoutParams[1]);
@@ -467,6 +472,7 @@ public class Server extends WebSocketServer
                 positionInit(parms[1], leftRow, leftCol, rightRow, rightCol);
                 break;
             case "identify": //example: identify#tablet or identify#webpage?
+                debugPrint("INFO: identify method invoked");
                 if (parms[1].equals("tablet"))
                 {
                     tabConnections.add(conn);
@@ -475,6 +481,7 @@ public class Server extends WebSocketServer
                 debugPrint("Total connections:: " + allConnections.size());
                 break;
             case "setposition": //example: setPosition#777A01#agne16#c1r1
+                debugPrint("INFO: setPosition method invoked");
                 sessionId = parms[1];
                 String studentId = parms[2];
                 String seat = parms[3];
@@ -502,6 +509,7 @@ public class Server extends WebSocketServer
                 }
                 break;
             case "getpositions": //example: getPositions#777A01 ???
+                debugPrint("INFO: getPositions method invoked");
                 LabState currState = runningStates.get(parms[1]);
                 students = currState.getClassData();
                 String message = "positions";
@@ -521,6 +529,7 @@ public class Server extends WebSocketServer
                 conn.send(message);// example: //positions#doejo16,john,doe,c1r1#doeja16,jane,doe,c4r3...
                 break;
             case "getlayout": // example: //getLayout#777A01
+                debugPrint("INFO: getLayout method invoked");
                 LabState currState2 = runningStates.get(parms[1]);
                 int[] layout = currState2.getLabLayout();
                 String message2 = "labSize"
