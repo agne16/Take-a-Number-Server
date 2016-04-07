@@ -519,6 +519,16 @@ public class Server extends WebSocketServer
                 }
                 conn.send(message);// example: //positions#doejo16,john,doe,c1r1#doeja16,jane,doe,c4r3...
                 break;
+            case "getlayout": // example: //getLayout#777A01
+                LabState currState2 = runningStates.get(parms[1]);
+                int[] layout = currState2.getLabLayout();
+                String message2 = "labSize"
+                        + "," + layout[0]
+                        + "," + layout[1]
+                        + "," + layout[2]
+                        + "," + layout[3];
+                conn.send(message2);// example: //labSize#5,5,4,3
+                break;
             case "ireallyreallywanttoclosetheserver":
                 debugPrint("Shutting down the server");
                 conn.send("Shutting down the server");
@@ -566,6 +576,7 @@ public class Server extends WebSocketServer
             debugPrint("Error in positionInit: session does not exist");
         }
         LabState labState = runningStates.get(sessionId);
+        labState.setLabLayout(new int[]{totalLeftColumns, totalLeftRows, totalRightColumns, totalRightColumns});
         Hashtable<String, String> positions = labState.getSeatPositions();
         for (int currentRow = 0; currentRow < totalLeftRows; currentRow++)
         {
