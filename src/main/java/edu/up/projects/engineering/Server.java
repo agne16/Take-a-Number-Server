@@ -25,6 +25,7 @@ public class Server extends WebSocketServer
 
     ArrayList<WebSocket> allConnections = new ArrayList<>();
     ArrayList<WebSocket> tabConnections = new ArrayList<>();
+    Hashtable<String, WebSocket> webConnections = new Hashtable<>();
 
     boolean debug = true;
     boolean verbose = false;
@@ -47,6 +48,21 @@ public class Server extends WebSocketServer
     @Override
     public void onClose(WebSocket conn, int code, String reason, boolean remote)
     {
+        if(webConnections.containsValue(conn))
+        {
+            String studentId = "none";
+            for (String s : webConnections.keySet())
+            {
+                if (webConnections.get(s).equals(conn))
+                {
+                    studentId = s;
+                }
+            }
+            for (LabState ls : runningStates.values())//Dangerous: can get big. Running states are not discarded until server is restarted
+            {
+                removeTraces(ls, studentId);
+            }
+        }
         allConnections.remove(conn);
         tabConnections.remove(conn);
         debugPrint("closed " + conn.getRemoteSocketAddress() + " with exit code " + code + " additional info: " + reason);
@@ -432,6 +448,10 @@ public class Server extends WebSocketServer
                 if (authenticateStudent(parms[1], parms[2]) && enterQueue(parms[1], parms[2]))
                 {
                     conn.send("User " + parms[2] + " has been added to the queue.");
+                    for(WebSocket connection : tabConnections)
+                    {
+                        connection.send("updateQueue#" + parms[1]); //example: updateQueue#777A01
+                    }
                 }
                 else
                 {
@@ -443,12 +463,10 @@ public class Server extends WebSocketServer
                 if (authenticateStudent(parms[1], parms[2]) && leaveQueue(parms[1], parms[2]))
                 {
                     conn.send("User " + parms[2] + " has been removed from the queue.");
-                    System.out.print("sent1");
                 }
                 else
                 {
                     conn.send("User " + parms[2] + " was not in the queue.");
-                    System.out.print("sent2");
                 }
                 break;
             case "getqueue": //example: getQueue#777A01
@@ -477,6 +495,10 @@ public class Server extends WebSocketServer
                 {
                     tabConnections.add(conn);
                 }
+                else if (parms[1].equals("webpage"))
+                {
+                    webConnections.put(parms[2], conn);
+                }
                 debugPrint("Number of tablets: " + tabConnections.size());
                 debugPrint("Total connections:: " + allConnections.size());
                 break;
@@ -499,6 +521,11 @@ public class Server extends WebSocketServer
                 Student student = students.get(studentId);
                 if (positions.get(seat).equals("unset"))
                 {
+                    if (!student.getPosition().equals("unset"))
+                    {
+                        labState.getSeatPositions().put(student.getPosition(),"unset");
+                        student.setPosition("unset");
+                    }
                     student.setPosition(parms[3]);
                     positions.put(seat,studentId);
                     conn.send("User " + studentId + " now assigned to seat " + seat);
@@ -647,5 +674,14 @@ public class Server extends WebSocketServer
         {
             System.out.println(s);
         }
+    }
+
+    public void removeTraces(LabState ls, String student)
+    {
+        ls.getLabQueue().remove(student);
+        Student st = ls.getClassData().get(student);
+        String seat = st.getPosition();
+        ls.getSeatPositions().put(seat, "unset");
+        st.setPosition("unset");
     }
 }
