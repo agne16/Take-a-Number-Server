@@ -523,7 +523,7 @@ public class Server extends WebSocketServer
                 LabState currState2 = runningStates.get(parms[1]);
                 int[] layout = currState2.getLabLayout();
                 String message2 = "labSize"
-                        + "," + layout[0]
+                        + "#" + layout[0]
                         + "," + layout[1]
                         + "," + layout[2]
                         + "," + layout[3];
@@ -603,7 +603,6 @@ public class Server extends WebSocketServer
             for (int currentColumn = 0; currentColumn < totalRightColumns; currentColumn++)
             {
                 int colIdOffset = currentColumn + totalLeftColumns;
-                int rowId = currentRow;
 
                 String id = "c" + colIdOffset + "r" + currentRow;
                 if (positions.get(id) == null)
