@@ -12,23 +12,30 @@ import java.util.Arrays;
 import java.util.Hashtable;
 
 /**
- * based on http://cs.lmu.edu/~ray/notes/javanetexamples/
- * A Capitalization Server and Client
+ * The primary class of the program
+ * Network connections, message interpretation, and data manipulation is handled here
+ *
  */
 public class Server extends WebSocketServer
 {
     String rootPath = System.getProperty("user.dir");   //root of project folder
     private String labsFilePath = rootPath + "/LabSessions";
 
+    //Object that handles XML parsing (see XMLHelper.java)
     XMLHelper helper = new XMLHelper();
+
+    //Currently running states (i.e. hold the lab session of each individual room at a given time)
     private Hashtable<String, LabState> runningStates = new Hashtable<>();
 
+    //Used to keep track of who is still actively connected
     ArrayList<WebSocket> allConnections = new ArrayList<>();
     ArrayList<WebSocket> tabConnections = new ArrayList<>();
     Hashtable<String, WebSocket> webConnections = new Hashtable<>();
 
-    boolean debug = true;
-    boolean verbose = false;
+    //Switches to determine how much is outputted to the console
+    //When both set to false, no extra messages outputted except for system errors
+    boolean debug = true; //Network connect-disconnects, queue, method calls, errors
+    boolean verbose = false; //Raw input messages, interpreted messages, checkpoint plain text
 
     public Server(InetSocketAddress address)
     {
@@ -48,8 +55,10 @@ public class Server extends WebSocketServer
     @Override
     public void onClose(WebSocket conn, int code, String reason, boolean remote)
     {
+        //Need to do extra bookkeeping if it's a connection from the web page
         if(webConnections.containsValue(conn))
         {
+            //Verify that there is a web connection whose bound to some student
             String studentId = "none";
             for (String s : webConnections.keySet())
             {
@@ -58,11 +67,12 @@ public class Server extends WebSocketServer
                     studentId = s;
                 }
             }
-            for (LabState ls : runningStates.values())//Dangerous: can get big. Running states are not discarded until server is restarted
+            for (LabState ls : runningStates.values())//NOTE: Dangerous! Can get big. Running states are not discarded until server is restarted
             {
-                removeTraces(ls, studentId);
+                removeTraces(ls, studentId);//remove the student from all running states and it variables
             }
         }
+        //Remove connection from all of our array lists
         allConnections.remove(conn);
         tabConnections.remove(conn);
         debugPrint("closed " + conn.getRemoteSocketAddress() + " with exit code " + code + " additional info: " + reason);
@@ -74,6 +84,8 @@ public class Server extends WebSocketServer
     public void onMessage(WebSocket conn, String message)
     {
         verbosePrint("received message from " + conn.getRemoteSocketAddress() + ": " + message);
+
+        //isolate the header and decrypt it if it needs it
         String header = message.split("#")[0].toLowerCase();
         if(header.equals("encrypted"))
         {
@@ -85,14 +97,16 @@ public class Server extends WebSocketServer
     @Override
     public void onError(WebSocket conn, Exception ex)
     {
-        System.err.println("an error occured on connection " + conn.getRemoteSocketAddress() + ":" + ex);
+        //Generic error catcher
+        //Note that the server will continue to run in most cases
+        System.err.println("an error occurred on connection " + conn.getRemoteSocketAddress() + ":" + ex);
     }
     //
     //End of WebSocketServer Implementation
     //
 
     /**
-     * checkpointInit recieves an initial string from a tablet to create all possibles things
+     * checkpointInit receives an initial string from a tablet to create all possibles things
      * required for a lab session.
      *
      * Assuming the following input message format:
@@ -114,7 +128,8 @@ public class Server extends WebSocketServer
     public String checkpointInit(String[] parms, int courseId, String courseSection,
                                  String labNumber, int numCheckpoints, String courseName)
     {
-        validatePath(labsFilePath);
+        validatePath(labsFilePath);//ensure that the path exists
+
         //the sessionId is just a composite of elements from the course data
         String sessionId = courseId + courseSection + labNumber;
 
@@ -157,28 +172,30 @@ public class Server extends WebSocketServer
      */
     public boolean checkpointWriteTemp(String sessionId, String content)
     {
+        //if there's data, set it in the state's condensted string variable
         if (!content.equals(""))
         {
-            //checkpointsTemp = content;
             runningStates.get(sessionId).setCondensedLabString(content);
 
             verbosePrint("INFO-new checkpoint variable: " + content);
             return true;
         }
-        return false;
+        return false;//string was empty
     }
 
     /**
-     * handles method calls to facilitate syncing of checkpointes
+     * handles method calls to facilitate syncing of checkpoints
      * @param sessionId session id of the lab
      * @param tabletString full message received from tablet
      * @return boolean indicating success
      */
     public String checkpointSync(String sessionId, String tabletString)
     {
+        //check the string that the state has on hand,
+        //merge if there's data, or just take the tablet's data
         String localString = runningStates.get(sessionId).getCondensedLabString();
         tabletString = tabletString.replaceFirst("checkpointSync", "checkpoint");
-        if (localString.equals(""))//if server has nothing, just take the tablet info
+        if (localString.equals(""))
         {
             checkpointWriteTemp(sessionId, tabletString);
             return tabletString;
@@ -193,6 +210,7 @@ public class Server extends WebSocketServer
         String courseName = oldLs.getCourseName();
         ls.setLabLayout(oldLs.getLabLayout());
 
+        //write it to its "persistent" file
         helper.writeFile(ls, labsFilePath, courseId, courseSection, courseName);
 
         checkpointWriteTemp(sessionId, mergedString);//update the temp file
@@ -233,11 +251,24 @@ public class Server extends WebSocketServer
      */
     public LabState checkSyncToLabState(String packet)
     {
-        String parms[] = packet.split("#");
+        String parms[] = packet.split("#");//split the string to an array
+
+        //IDX 0 = "checkpointSync"
+        //IDX 1 = sessionId
+        //IDX 2 = "userId,firstName,lastName,0,0,0"
+        //IDX 3 = "userId,firstName,lastName,0,0,0"
+        //...
+        //IDX n = "userId,firstName,lastName,0,0,0"
+
         String sessionId = parms[1];
-        String[] classStrings = Arrays.copyOfRange(parms, 2, parms.length);
+        String[] classStrings = Arrays.copyOfRange(parms, 2, parms.length);//create array of only the student strings
+
+        //needed for LabState constructor
         Hashtable<String, Student> classData = new Hashtable<>();
         ArrayList<String> classRoster = new ArrayList<>();
+        ArrayList<String> labQueue = new ArrayList<>();
+
+        //process all of the student strings
         for (String s : classStrings)
         {
             String[] studentData = s.split(",");
@@ -255,12 +286,11 @@ public class Server extends WebSocketServer
         //guy on the class roster grabbed from the hashtable. Messy one-liner. I know.
         int numCheckpoints = classData.get(classRoster.get(0)).getCheckpoints().length;
 
-        ArrayList<String> labQueue = new ArrayList<>();
         return new LabState(sessionId,classData,classRoster,labQueue,numCheckpoints);
     }
 
     /**
-     * Helper method to see if a student is part of a lab sessioin
+     * Helper method to see if a student is part of a lab session
      *
      * @param studentId the student's id
      * @param sessionId the session id
@@ -349,16 +379,12 @@ public class Server extends WebSocketServer
     /**
      * Helper method to interpret an incoming message
      *
-     * @param conn the direct connection from whom you recieve the message
+     * @param conn the direct connection from whom you receive the message
      * @param s = the string that was received
      */
     public void interpretMessage(WebSocket conn, String s)
     {
         String input = s;
-//        if (input.equals("") || input.equals("."))
-//        {
-//            //close the connection
-//        }
 
         input = input.trim();
         verbosePrint("Message received: " + input);
@@ -580,8 +606,7 @@ public class Server extends WebSocketServer
                 System.exit(0);
                 break;
             default:
-                //debugPrint("nothing doing");
-                conn.send("nothing doing");
+                conn.send("A message was received, no action was taken");
                 break;
         }
     }
@@ -595,7 +620,7 @@ public class Server extends WebSocketServer
     public String encrypt(String s)
     {
         BasicTextEncryptor textEncryptor = new BasicTextEncryptor();
-        textEncryptor.setPassword("ForTheLulz");
+        textEncryptor.setPassword("ForTheLulz");//TODO Please do change this privately or the GitHub boogeymen will get you
         String myEncryptedText = textEncryptor.encrypt(s);
         return "encrypted#" + myEncryptedText;
     }
@@ -609,11 +634,20 @@ public class Server extends WebSocketServer
     public String decrypt(String s)
     {
         BasicTextEncryptor textEncryptor = new BasicTextEncryptor();
-        textEncryptor.setPassword("ForTheLulz");
+        textEncryptor.setPassword("ForTheLulz");//TODO Please do change this privately or the GitHub boogeymen will get you
         return textEncryptor.decrypt(s);
 
     }
 
+    /**
+     * Sets the size of the room for the lab session
+     *
+     * @param sessionId the session to set the size of room
+     * @param totalLeftRows number of rows on left side of room
+     * @param totalLeftColumns number of columns on left side of room
+     * @param totalRightRows number of rows on right side of room
+     * @param totalRightColumns number of columns on right side of room
+     */
     public void positionInit(String sessionId, int totalLeftRows, int totalLeftColumns, int totalRightRows, int totalRightColumns)
     {
         if (!runningStates.keySet().contains(sessionId.toUpperCase()))
@@ -621,8 +655,13 @@ public class Server extends WebSocketServer
             debugPrint("Error in positionInit: session does not exist");
         }
         LabState labState = runningStates.get(sessionId);
-        labState.setLabLayout(new int[]{totalLeftRows, totalLeftColumns, totalRightRows, totalRightColumns});
+        labState.setLabLayout(new int[]{totalLeftRows, totalLeftColumns, totalRightRows, totalRightColumns});//set lab layout array in state
         Hashtable<String, String> positions = labState.getSeatPositions();
+
+        //Initialize left side of room as a hashtable
+        //Keys are strings of the form cXrY where X is a column number, Y is a row number
+        //Values are the studentId of the seat occupant
+        //Otherwise, it's set to unset
         for (int currentRow = 0; currentRow < totalLeftRows; currentRow++)
         {
             for (int currentColumn = 0; currentColumn < totalLeftColumns; currentColumn++)
@@ -638,6 +677,11 @@ public class Server extends WebSocketServer
             }
         }
 
+        //Initialize right side of room as a hashtable
+        //Keys are strings of the form cXrY where X is a column number, Y is a row number
+        //Columns need an offset made by the left side of the room
+        //Values are the studentId of the seat occupant
+        //Otherwise, it's set to unset
         for (int currentRow = 0; currentRow < totalRightRows; currentRow++)
         {
             for (int currentColumn = 0; currentColumn < totalRightColumns; currentColumn++)
@@ -651,6 +695,8 @@ public class Server extends WebSocketServer
                 }
             }
         }
+
+        //set data, write to file
         labState.setSeatPositions(positions);
         int courseId = labState.getCourseId();
         String courseSection = labState.getCourseSection();
@@ -658,6 +704,11 @@ public class Server extends WebSocketServer
         helper.writeFile(labState, labsFilePath, courseId, courseSection, courseName);
     }
 
+    /**
+     * Helper method to print a message only if the debug boolean is set
+     *
+     * @param s the message to print
+     */
     public void debugPrint(String s)
     {
         if (debug)
@@ -666,6 +717,11 @@ public class Server extends WebSocketServer
         }
     }
 
+    /**
+     * Helper method to print a message only if the verbose boolean is set
+     *
+     * @param s the message to print
+     */
     public void verbosePrint(String s)
     {
         if (verbose)
@@ -674,20 +730,41 @@ public class Server extends WebSocketServer
         }
     }
 
+    /**
+     * Remove a student's queue position on disconnect.
+     * Also release the student's occupied seat
+     *
+     * @param ls the lab state to make changes to
+     * @param student the studentId of the student to remove
+     */
     public void removeTraces(LabState ls, String student)
     {
         leaveQueue(ls.getSessionId(), student);
+
+        //retrieve student's seats
         Student st = ls.getClassData().get(student);
         String seat = st.getPosition();
+
+        //set seats to available
         ls.getSeatPositions().put(seat, "unset");
         st.setPosition("unset");
     }
 
+    /**
+     * Converts the queue array list to a String for the tablets to interpret
+     *
+     * @param sessionId the session id of the lab
+     * @return the string of the current queue
+     */
     public String generateQueueString(String sessionId)
     {
         LabState currState = runningStates.get(sessionId);
         Hashtable<String, Student> students = currState.getClassData();
-        String message = "positions";
+        String message = "positions";//Header for the message
+
+        //check every student in the class
+        //if the student has a seat that they occupy,
+        //append their information on the string
         for (Student student2 : students.values())
         {
             if (!student2.getPosition().equals("unset"))
